@@ -388,22 +388,22 @@ Ready to dive deeper into the system? Check out these related sections:
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #4CAF50;">
-<h4><a href="/getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
+<h4><a href="getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
 <p>Learn how to deploy this architecture</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #F44336;">
-<h4><a href="/security" style="text-decoration: none; color: #F44336;">🔐 Security Details</a></h4>
+<h4><a href="security" style="text-decoration: none; color: #F44336;">🔐 Security Details</a></h4>
 <p>Understand the security implementation</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #9C27B0;">
-<h4><a href="/deployment" style="text-decoration: none; color: #9C27B0;">⚙️ Deployment Guide</a></h4>
+<h4><a href="deployment" style="text-decoration: none; color: #9C27B0;">⚙️ Deployment Guide</a></h4>
 <p>Production deployment strategies</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #607D8B;">
-<h4><a href="/monitoring" style="text-decoration: none; color: #607D8B;">📊 Monitoring Setup</a></h4>
+<h4><a href="monitoring" style="text-decoration: none; color: #607D8B;">📊 Monitoring Setup</a></h4>
 <p>Configure monitoring and alerting</p>
 </div>
 

@@ -1,7 +1,7 @@
 name: "AI Agent Launchpad Documentation"
 description: "Complete technical documentation for deploying and managing Eliza-based AI agents"
-baseurl: ""
-url: "https://yourusername.github.io/agent-launchpad-infra"
+baseurl: "/agent-launchpad-infra"
+url: "https://yourusername.github.io"
 
 # Theme
 theme: jekyll-theme-cayman

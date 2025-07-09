@@ -17,7 +17,7 @@ Need assistance with the AI Agent Launchpad? We're here to help! Choose the supp
 Having trouble getting started? Here are the most common setup issues and solutions:
 
 <div class="alert alert-info">
-<strong>💡 Pro Tip:</strong> Most setup issues are related to environment configuration or missing dependencies. Check the <a href="/getting-started">Getting Started guide</a> first.
+<strong>💡 Pro Tip:</strong> Most setup issues are related to environment configuration or missing dependencies. Check the <a href="getting-started">Getting Started guide</a> first.
 </div>
 
 #### Common Setup Problems
@@ -534,7 +534,7 @@ Can't find what you're looking for? Here are all your options:
 <div style="text-align: center; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
 <h4>📚 Docs</h4>
 <p>Complete documentation</p>
-<a href="/getting-started" style="color: #28a745; text-decoration: none; font-weight: bold;">Read Docs →</a>
+<a href="getting-started" style="color: #28a745; text-decoration: none; font-weight: bold;">Read Docs →</a>
 </div>
 
 </div>

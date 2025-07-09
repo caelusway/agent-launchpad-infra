@@ -613,22 +613,22 @@ Ready to implement your own use case? Here are some helpful resources:
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #4CAF50;">
-<h4><a href="/getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
+<h4><a href="getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
 <p>Set up your development environment and deploy your first agent</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #FF9800;">
-<h4><a href="/api-reference" style="text-decoration: none; color: #FF9800;">📡 API Reference</a></h4>
+<h4><a href="api-reference" style="text-decoration: none; color: #FF9800;">📡 API Reference</a></h4>
 <p>Learn about all available endpoints and integration options</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #2196F3;">
-<h4><a href="/architecture" style="text-decoration: none; color: #2196F3;">🏗️ Architecture</a></h4>
+<h4><a href="architecture" style="text-decoration: none; color: #2196F3;">🏗️ Architecture</a></h4>
 <p>Understand the system architecture and components</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #E91E63;">
-<h4><a href="/support" style="text-decoration: none; color: #E91E63;">📞 Support</a></h4>
+<h4><a href="support" style="text-decoration: none; color: #E91E63;">📞 Support</a></h4>
 <p>Get help with your implementation and troubleshooting</p>
 </div>
 

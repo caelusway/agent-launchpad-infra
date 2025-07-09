@@ -398,22 +398,22 @@ Congratulations! You've successfully set up the AI Agent Launchpad. Here's what 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #FF9800;">
-<h4><a href="/api-reference" style="text-decoration: none; color: #FF9800;">📡 Explore APIs</a></h4>
+<h4><a href="api-reference" style="text-decoration: none; color: #FF9800;">📡 Explore APIs</a></h4>
 <p>Learn about all available endpoints and features</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #F44336;">
-<h4><a href="/security" style="text-decoration: none; color: #F44336;">🔐 Security Setup</a></h4>
+<h4><a href="security" style="text-decoration: none; color: #F44336;">🔐 Security Setup</a></h4>
 <p>Configure security best practices</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #795548;">
-<h4><a href="/use-cases" style="text-decoration: none; color: #795548;">💡 Use Cases</a></h4>
+<h4><a href="use-cases" style="text-decoration: none; color: #795548;">💡 Use Cases</a></h4>
 <p>Explore real-world examples and templates</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #607D8B;">
-<h4><a href="/monitoring" style="text-decoration: none; color: #607D8B;">📊 Advanced Monitoring</a></h4>
+<h4><a href="monitoring" style="text-decoration: none; color: #607D8B;">📊 Advanced Monitoring</a></h4>
 <p>Set up comprehensive monitoring and alerting</p>
 </div>
 

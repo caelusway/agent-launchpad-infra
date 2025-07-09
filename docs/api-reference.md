@@ -631,22 +631,22 @@ status = client.agents.get_status(agent['agentId'])
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #4CAF50;">
-<h4><a href="/getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
+<h4><a href="getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
 <p>Set up your first agent deployment</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #F44336;">
-<h4><a href="/security" style="text-decoration: none; color: #F44336;">🔐 Security Guide</a></h4>
+<h4><a href="security" style="text-decoration: none; color: #F44336;">🔐 Security Guide</a></h4>
 <p>Learn about API security and best practices</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #795548;">
-<h4><a href="/use-cases" style="text-decoration: none; color: #795548;">💡 Use Cases</a></h4>
+<h4><a href="use-cases" style="text-decoration: none; color: #795548;">💡 Use Cases</a></h4>
 <p>Explore real-world API usage examples</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #E91E63;">
-<h4><a href="/support" style="text-decoration: none; color: #E91E63;">📞 Support</a></h4>
+<h4><a href="support" style="text-decoration: none; color: #E91E63;">📞 Support</a></h4>
 <p>Get help with API integration</p>
 </div>
 
