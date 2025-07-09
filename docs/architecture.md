@@ -14,31 +14,53 @@ The AI Agent Launchpad is designed as a scalable, secure infrastructure backend 
 
 ### 🔵 Eliza Components (Existing Framework)
 
-These are the core components provided by the Eliza framework:
+These are the core components provided by the **official Eliza framework** based on the [elizaOS monorepo structure](https://github.com/elizaOS/eliza):
 
 ```typescript
-// Eliza Core Structure
+// Official Eliza Framework Structure
 eliza/
 ├── packages/
-│   ├── core/              # Core ElizaOS functionality
-│   ├── client-web/        # Web interface  
-│   ├── client-discord/    # Discord client
-│   ├── client-telegram/   # Telegram client
-│   ├── plugin-*/          # Various plugins (@elizaos/plugin-*)
-│   └── cli/              # CLI tool (elizaos command)
+│   ├── core/                    # @elizaos/core - Core ElizaOS functionality
+│   ├── app/                     # @elizaos/app - Tauri-based cross-platform app
+│   ├── cli/                     # @elizaos/cli - CLI tool (elizaos command)
+│   ├── plugin-bootstrap/        # @elizaos/plugin-bootstrap - Essential communication core
+│   ├── plugin-sql/              # @elizaos/plugin-sql - Database integration
+│   ├── plugin-*/                # Various plugins (@elizaos/plugin-*)
+│   ├── create-eliza/            # Project scaffolding tool
+│   └── docs/                    # Official documentation
+├── docs/                        # Documentation source files
+├── examples/                    # Example projects and templates
+└── scripts/                     # Build and utility scripts
 ```
 
-**What Eliza provides:**
-- Agent runtime environment
-- Character system (personality definitions)
-- Plugin architecture
-- Multi-platform clients (Discord, Telegram, etc.)
-- Memory management and RAG
-- CLI tools for development
+**Core Eliza Components:**
+
+#### **🤖 Agent Runtime**
+- **Agent Runtime**: Orchestrates agent behavior, manages state, and coordinates components
+- **Character System**: Personality definitions using character files (`.character.json`)
+- **Memory Management**: RAG system for document processing and semantic memory
+- **Task Management**: Manages scheduled and deferred operations
+
+#### **📚 Services & Providers**
+- **Services**: Multi-platform communication (Discord, Telegram, Twitter, etc.)
+- **Providers**: Supply context to inform agent decisions in real-time
+- **Evaluators**: Analyze conversations to extract insights and improve responses
+- **Actions**: Executable capabilities for agents to respond and interact with systems
+
+#### **🏗️ Structure & Development**
+- **Worlds**: Organize environments like servers or projects
+- **Rooms**: Spaces for conversation, like channels or DMs
+- **Entities**: Represents users, bots, and other participants
+- **Plugin System**: Highly extensible action and plugin architecture
+
+#### **🛠️ Development Tools**
+- **CLI Tools**: `elizaos` command for project creation and management
+- **Project Templates**: Scaffolding for new projects and plugins
+- **TypeScript Implementation**: 100% TypeScript with modular architecture
 
 ### 🟡 Agent Launchpad Services (New Implementation)
 
-These are the new services that need to be built:
+These are the new services built to integrate with the official Eliza framework:
 
 ```typescript
 // Agent Launchpad Backend Structure
@@ -61,6 +83,12 @@ agent-launchpad-backend/
 │   └── types/
 │       └── interfaces.ts
 ```
+
+**Integration with Eliza:**
+- **Compatible Plugin Structure**: Follows `@elizaos/plugin-*` conventions
+- **Character System**: Uses official `.character.json` format
+- **CLI Integration**: Works with `elizaos` commands for development
+- **Modular Architecture**: Aligns with Eliza's TypeScript monorepo structure
 
 ## 🔄 Complete System Flow
 

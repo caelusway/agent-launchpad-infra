@@ -15,11 +15,12 @@ This guide will walk you through setting up the AI Agent Launchpad infrastructur
 Before you begin, ensure you have:
 
 ### Required Software
+- **Node.js** (version 23 or higher) - Required for Eliza
+- **Bun** package manager - Recommended for Eliza projects
 - **Docker** (version 20.10 or higher)
 - **Kubernetes** cluster (local or cloud)
 - **kubectl** configured and connected to your cluster
-- **Node.js** (version 18 or higher)
-- **npm** or **yarn** package manager
+- **Eliza CLI** - Install with `bun install -g @elizaos/cli`
 
 ### Required Services
 - **PostgreSQL** database (version 12 or higher)
@@ -33,7 +34,20 @@ Before you begin, ensure you have:
 
 ## 🏗️ Installation
 
-### Step 1: Clone the Repository
+### Step 1: Install Eliza CLI
+
+```bash
+# Install the ElizaOS CLI globally
+bun install -g @elizaos/cli
+
+# Verify installation
+elizaos --version
+
+# Get help with available commands
+elizaos --help
+```
+
+### Step 2: Clone the Repository
 
 ```bash
 # Clone the repository
@@ -41,23 +55,26 @@ git clone https://github.com/yourusername/agent-launchpad-infra.git
 cd agent-launchpad-infra
 ```
 
-### Step 2: Install Dependencies
+### Step 3: Install Dependencies
 
 ```bash
-# Install Node.js dependencies
-npm install
+# Install dependencies using Bun (recommended for Eliza projects)
+bun install
 
-# Or if using yarn
-yarn install
+# Or if using npm
+npm install
 ```
 
-### Step 3: Configure Environment
+### Step 4: Configure Environment
 
 ```bash
 # Copy environment template
 cp .env.example .env
 
-# Edit configuration
+# Edit configuration using Eliza CLI
+elizaos env edit-local
+
+# Or manually edit the .env file
 nano .env
 ```
 
