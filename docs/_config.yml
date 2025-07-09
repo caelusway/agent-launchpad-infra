@@ -1,0 +1,87 @@
+name: "AI Agent Launchpad Documentation"
+description: "Complete technical documentation for deploying and managing Eliza-based AI agents"
+baseurl: ""
+url: "https://yourusername.github.io/agent-launchpad-infra"
+
+# Theme
+theme: jekyll-theme-cayman
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Navigation menu
+navigation:
+  - title: "🏠 Home"
+    url: "/"
+  - title: "🏗️ Architecture"
+    url: "/architecture"
+  - title: "🚀 Getting Started"
+    url: "/getting-started"
+  - title: "📡 API Reference"
+    url: "/api-reference"
+  - title: "🔐 Security"
+    url: "/security"
+  - title: "⚙️ Deployment"
+    url: "/deployment"
+  - title: "📊 Monitoring"
+    url: "/monitoring"
+  - title: "💡 Use Cases"
+    url: "/use-cases"
+  - title: "🤝 Contributing"
+    url: "/contributing"
+  - title: "📞 Support"
+    url: "/support"
+
+# Site settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# SEO
+title: "AI Agent Launchpad Documentation"
+author: "AI Agent Launchpad Team"
+email: "support@your-domain.com"
+twitter_username: "yourusername"
+
+# GitHub
+github:
+  repository_name: "agent-launchpad-infra"
+  owner_name: "yourusername"
+
+# Social links
+social:
+  - name: "GitHub"
+    icon: "fab fa-github"
+    url: "https://github.com/yourusername/agent-launchpad-infra"
+  - name: "Discord"
+    icon: "fab fa-discord"
+    url: "https://discord.gg/your-server"
+  - name: "Email"
+    icon: "fas fa-envelope"
+    url: "mailto:support@your-domain.com"
+
+# Analytics (optional)
+google_analytics: # Your GA tracking ID
+
+# Exclude from processing
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+
+# Include
+include:
+  - _pages
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name/ 

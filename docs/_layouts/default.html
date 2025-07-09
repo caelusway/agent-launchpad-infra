@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en-US" }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% seo %}
+    
+    <style>
+      /* Navigation Styles */
+      .nav-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1rem 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+      
+      .nav-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      
+      .nav-menu {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      
+      .nav-item {
+        margin: 0;
+      }
+      
+      .nav-link {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+      
+      .nav-link:hover {
+        background-color: rgba(255,255,255,0.2);
+        transform: translateY(-2px);
+        text-decoration: none;
+        color: white;
+      }
+      
+      .nav-link.active {
+        background-color: rgba(255,255,255,0.3);
+        font-weight: 600;
+      }
+      
+      /* Mobile Navigation */
+      @media (max-width: 768px) {
+        .nav-menu {
+          gap: 0.3rem;
+        }
+        
+        .nav-link {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.8rem;
+        }
+      }
+      
+      /* Page Content */
+      .page-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+      
+      /* Footer */
+      .site-footer {
+        background-color: #2c3e50;
+        color: white;
+        padding: 2rem 0;
+        margin-top: 4rem;
+      }
+      
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        text-align: center;
+      }
+      
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      
+      .footer-link {
+        color: #ecf0f1;
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+      
+      .footer-link:hover {
+        color: #3498db;
+      }
+      
+      .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      
+      .social-link {
+        color: #ecf0f1;
+        font-size: 1.5rem;
+        transition: color 0.3s ease;
+        text-decoration: none;
+      }
+      
+      .social-link:hover {
+        color: #3498db;
+      }
+      
+      /* Breadcrumbs */
+      .breadcrumbs {
+        background-color: #f8f9fa;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+      }
+      
+      .breadcrumb-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+      }
+      
+      .breadcrumb-link {
+        color: #007bff;
+        text-decoration: none;
+      }
+      
+      .breadcrumb-link:hover {
+        text-decoration: underline;
+      }
+      
+      /* Improved content styling */
+      .main-content {
+        line-height: 1.6;
+      }
+      
+      .main-content h1, .main-content h2, .main-content h3 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      
+      .main-content h1 {
+        color: #2c3e50;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 0.5rem;
+      }
+      
+      .main-content h2 {
+        color: #34495e;
+        border-bottom: 2px solid #95a5a6;
+        padding-bottom: 0.3rem;
+      }
+      
+      .main-content h3 {
+        color: #34495e;
+      }
+      
+      /* Alert boxes */
+      .alert {
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 6px;
+        border-left: 4px solid;
+      }
+      
+      .alert-info {
+        background-color: #e7f3ff;
+        border-left-color: #3498db;
+        color: #2c3e50;
+      }
+      
+      .alert-warning {
+        background-color: #fff3cd;
+        border-left-color: #f39c12;
+        color: #856404;
+      }
+      
+      .alert-success {
+        background-color: #d4edda;
+        border-left-color: #27ae60;
+        color: #155724;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <!-- Navigation -->
+    <nav class="nav-container">
+      <div class="nav-content">
+        <ul class="nav-menu">
+          {% for item in site.navigation %}
+            <li class="nav-item">
+              <a href="{{ item.url | relative_url }}" 
+                 class="nav-link {% if page.url == item.url %}active{% endif %}">
+                {{ item.title }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Breadcrumbs -->
+    {% if page.url != "/" %}
+    <div class="breadcrumbs">
+      <div class="breadcrumb-content">
+        <a href="{{ '/' | relative_url }}" class="breadcrumb-link">🏠 Home</a>
+        <span> / </span>
+        <span>{{ page.title | default: page.url | remove: "/" | replace: "-", " " | capitalize }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Page Content -->
+    <main class="page-content">
+      <div class="main-content">
+        {{ content }}
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-links">
+          <a href="{{ '/' | relative_url }}" class="footer-link">Home</a>
+          <a href="{{ '/architecture' | relative_url }}" class="footer-link">Architecture</a>
+          <a href="{{ '/getting-started' | relative_url }}" class="footer-link">Getting Started</a>
+          <a href="{{ '/api-reference' | relative_url }}" class="footer-link">API Reference</a>
+          <a href="{{ '/support' | relative_url }}" class="footer-link">Support</a>
+        </div>
+        
+        <div class="social-links">
+          {% for social in site.social %}
+            <a href="{{ social.url }}" class="social-link" target="_blank" aria-label="{{ social.name }}">
+              <i class="{{ social.icon }}"></i>
+            </a>
+          {% endfor %}
+        </div>
+        
+        <p>&copy; {{ site.time | date: "%Y" }} {{ site.author | default: "AI Agent Launchpad Team" }}. All rights reserved.</p>
+        <p>Made with ❤️ for the AI community</p>
+      </div>
+    </footer>
+  </body>
+</html> 
