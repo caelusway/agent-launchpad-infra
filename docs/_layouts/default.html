@@ -563,6 +563,23 @@
         }
       }
       
+      /* Mermaid Diagrams */
+      .mermaid {
+        text-align: center;
+        margin: var(--space-8) 0;
+        background: white;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-6);
+        border: 1px solid var(--gray-200);
+        overflow-x: auto;
+      }
+      
+      .mermaid svg {
+        max-width: 100%;
+        height: auto;
+      }
+      
       /* Smooth Animations */
       @media (prefers-reduced-motion: no-preference) {
         .main-content {
@@ -641,5 +658,64 @@
         <p class="footer-text">Made with ❤️ for the AI community</p>
       </div>
     </footer>
+    
+    <!-- Mermaid.js for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+      // Initialize Mermaid with custom theme
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        themeVariables: {
+          primaryColor: '#0ea5e9',
+          primaryTextColor: '#1e293b',
+          primaryBorderColor: '#0284c7',
+          lineColor: '#64748b',
+          secondaryColor: '#f1f5f9',
+          tertiaryColor: '#e2e8f0',
+          background: '#ffffff',
+          mainBkg: '#ffffff',
+          secondBkg: '#f8fafc',
+          tertiaryBkg: '#f1f5f9',
+        },
+        flowchart: {
+          useMaxWidth: true,
+          htmlLabels: true,
+          curve: 'basis'
+        },
+        sequence: {
+          diagramMarginX: 50,
+          diagramMarginY: 10,
+          actorMargin: 50,
+          width: 150,
+          height: 65,
+          boxMargin: 10,
+          boxTextMargin: 5,
+          noteMargin: 10,
+          messageMargin: 35,
+          mirrorActors: true,
+          bottomMarginAdj: 1,
+          useMaxWidth: true,
+          rightAngles: false,
+          showSequenceNumbers: false,
+        },
+        gantt: {
+          useMaxWidth: true,
+          barHeight: 20,
+          fontSize: 11,
+          fontFamily: 'Inter, sans-serif',
+          gridLineStartPadding: 35,
+          bottomPadding: 25,
+          leftPadding: 75,
+          topPadding: 35,
+          rightPadding: 35,
+        }
+      });
+      
+      // Re-render Mermaid diagrams when content changes
+      document.addEventListener('DOMContentLoaded', function() {
+        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+      });
+    </script>
   </body>
 </html> 
