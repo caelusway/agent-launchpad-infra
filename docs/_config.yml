@@ -27,10 +27,6 @@ navigation:
     url: "/monitoring"
   - title: "💡 Use Cases"
     url: "/use-cases"
-  - title: "🤝 Contributing"
-    url: "/contributing"
-  - title: "📞 Support"
-    url: "/support"
 
 # Site settings
 markdown: kramdown
@@ -38,6 +34,11 @@ highlighter: rouge
 kramdown:
   input: GFM
   syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+  parse_block_html: true
+  parse_span_html: true
 
 # SEO
 title: "AI Agent Launchpad Documentation"

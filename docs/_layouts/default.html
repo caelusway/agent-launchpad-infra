@@ -573,11 +573,57 @@
         padding: var(--space-6);
         border: 1px solid var(--gray-200);
         overflow-x: auto;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       
       .mermaid svg {
         max-width: 100%;
         height: auto;
+        font-family: var(--font-family-sans);
+      }
+      
+      .mermaid-error {
+        color: var(--error-600);
+        background: var(--error-50);
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--error-200);
+        font-family: var(--font-family-mono);
+        font-size: 0.875rem;
+      }
+      
+      .mermaid-loading {
+        color: var(--gray-600);
+        font-style: italic;
+        padding: var(--space-4);
+      }
+      
+      /* Ensure mermaid code blocks are hidden while processing */
+      pre code.language-mermaid {
+        display: block;
+        background: var(--gray-100);
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+        font-family: var(--font-family-mono);
+        font-size: 0.875rem;
+        overflow-x: auto;
+      }
+      
+      /* Style for sequence diagrams */
+      .mermaid .actor {
+        font-family: var(--font-family-sans) !important;
+      }
+      
+      .mermaid .messageText {
+        font-family: var(--font-family-sans) !important;
+        font-size: 14px !important;
+      }
+      
+      .mermaid .labelText {
+        font-family: var(--font-family-sans) !important;
       }
       
       /* Smooth Animations */
@@ -662,60 +708,207 @@
     <!-- Mermaid.js for diagram rendering -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
     <script>
-      // Initialize Mermaid with custom theme
-      mermaid.initialize({
-        startOnLoad: true,
-        theme: 'default',
-        themeVariables: {
-          primaryColor: '#0ea5e9',
-          primaryTextColor: '#1e293b',
-          primaryBorderColor: '#0284c7',
-          lineColor: '#64748b',
-          secondaryColor: '#f1f5f9',
-          tertiaryColor: '#e2e8f0',
-          background: '#ffffff',
-          mainBkg: '#ffffff',
-          secondBkg: '#f8fafc',
-          tertiaryBkg: '#f1f5f9',
-        },
-        flowchart: {
-          useMaxWidth: true,
-          htmlLabels: true,
-          curve: 'basis'
-        },
-        sequence: {
-          diagramMarginX: 50,
-          diagramMarginY: 10,
-          actorMargin: 50,
-          width: 150,
-          height: 65,
-          boxMargin: 10,
-          boxTextMargin: 5,
-          noteMargin: 10,
-          messageMargin: 35,
-          mirrorActors: true,
-          bottomMarginAdj: 1,
-          useMaxWidth: true,
-          rightAngles: false,
-          showSequenceNumbers: false,
-        },
-        gantt: {
-          useMaxWidth: true,
-          barHeight: 20,
-          fontSize: 11,
-          fontFamily: 'Inter, sans-serif',
-          gridLineStartPadding: 35,
-          bottomPadding: 25,
-          leftPadding: 75,
-          topPadding: 35,
-          rightPadding: 35,
-        }
+      // Enhanced Mermaid configuration for GitHub Pages
+      document.addEventListener('DOMContentLoaded', function() {
+        // Configure Mermaid
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'base',
+          themeVariables: {
+            primaryColor: '#0ea5e9',
+            primaryTextColor: '#1e293b',
+            primaryBorderColor: '#0284c7',
+            lineColor: '#64748b',
+            secondaryColor: '#f1f5f9',
+            tertiaryColor: '#e2e8f0',
+            background: '#ffffff',
+            mainBkg: '#ffffff',
+            secondBkg: '#f8fafc',
+            tertiaryBkg: '#f1f5f9',
+            actorBkg: '#f8fafc',
+            actorBorder: '#e2e8f0',
+            actorTextColor: '#1e293b',
+            labelBoxBkgColor: '#f1f5f9',
+            labelBoxBorderColor: '#cbd5e1',
+            labelTextColor: '#1e293b',
+            loopTextColor: '#1e293b',
+            noteBkgColor: '#fef3c7',
+            noteBorderColor: '#f59e0b',
+            noteTextColor: '#92400e',
+            activationBkgColor: '#dbeafe',
+            activationBorderColor: '#3b82f6',
+            sequenceNumberColor: '#ffffff'
+          },
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis',
+            padding: 20
+          },
+          sequence: {
+            diagramMarginX: 50,
+            diagramMarginY: 10,
+            actorMargin: 50,
+            width: 150,
+            height: 65,
+            boxMargin: 10,
+            boxTextMargin: 5,
+            noteMargin: 10,
+            messageMargin: 35,
+            mirrorActors: true,
+            bottomMarginAdj: 1,
+            useMaxWidth: true,
+            rightAngles: false,
+            showSequenceNumbers: false,
+            wrap: true,
+            wrapPadding: 10
+          },
+          gantt: {
+            useMaxWidth: true,
+            barHeight: 20,
+            fontSize: 11,
+            fontFamily: 'Inter, sans-serif',
+            gridLineStartPadding: 35,
+            bottomPadding: 25,
+            leftPadding: 75,
+            topPadding: 35,
+            rightPadding: 35,
+          },
+          gitgraph: {
+            useMaxWidth: true
+          }
+        });
+        
+        // Debug: Log what we find
+        console.log('Looking for Mermaid diagrams...');
+        
+        // Find all possible mermaid code blocks (multiple selectors for different Jekyll configurations)
+        const mermaidSelectors = [
+          'pre code.language-mermaid',
+          'code.language-mermaid', 
+          'pre code[class*="mermaid"]',
+          'code[class*="mermaid"]',
+          'pre[class*="mermaid"]'
+        ];
+        
+        let mermaidBlocks = [];
+        mermaidSelectors.forEach(selector => {
+          const blocks = document.querySelectorAll(selector);
+          blocks.forEach(block => {
+            if (!mermaidBlocks.includes(block)) {
+              mermaidBlocks.push(block);
+            }
+          });
+        });
+        
+        console.log('Found', mermaidBlocks.length, 'mermaid code blocks');
+        
+        mermaidBlocks.forEach(function(block, index) {
+          console.log('Processing mermaid block', index, block);
+          
+          // Create a new div for the mermaid diagram
+          const mermaidDiv = document.createElement('div');
+          mermaidDiv.className = 'mermaid';
+          mermaidDiv.id = 'mermaid-diagram-' + index;
+          
+          // Add loading state
+          mermaidDiv.innerHTML = '<div class="mermaid-loading">Loading diagram...</div>';
+          
+          // Get the mermaid code
+          let mermaidCode = block.textContent || block.innerText;
+          
+          // Clean up the code
+          mermaidCode = mermaidCode.trim();
+          console.log('Mermaid code:', mermaidCode.substring(0, 100) + '...');
+          
+          // Set the diagram content
+          mermaidDiv.textContent = mermaidCode;
+          
+          // Replace the code block with the mermaid div
+          const codeParent = block.closest('pre') || block;
+          codeParent.parentNode.replaceChild(mermaidDiv, codeParent);
+        });
+        
+                 // Also look for any remaining code blocks that might contain mermaid
+         const allCodeBlocks = document.querySelectorAll('pre code, code');
+         allCodeBlocks.forEach(function(block, index) {
+           const text = block.textContent || block.innerText;
+           const trimmedText = text.trim();
+           
+           // Check if this looks like a mermaid diagram
+           if (trimmedText.startsWith('sequenceDiagram') || 
+               trimmedText.startsWith('flowchart') || 
+               trimmedText.startsWith('graph') ||
+               trimmedText.startsWith('gantt') ||
+               trimmedText.startsWith('gitgraph') ||
+               trimmedText.includes('participant ') ||
+               trimmedText.includes('-->') ||
+               trimmedText.includes('->>')) {
+             
+             console.log('Found potential mermaid diagram in code block:', trimmedText.substring(0, 50));
+             
+             // Create mermaid div
+             const mermaidDiv = document.createElement('div');
+             mermaidDiv.className = 'mermaid';
+             mermaidDiv.id = 'mermaid-auto-' + index;
+             mermaidDiv.textContent = trimmedText;
+             
+             // Replace the code block
+             const codeParent = block.closest('pre') || block;
+             codeParent.parentNode.replaceChild(mermaidDiv, codeParent);
+           }
+         });
+         
+         // Also handle existing .mermaid divs
+         const existingMermaidDivs = document.querySelectorAll('.mermaid');
+         console.log('Total mermaid divs found:', existingMermaidDivs.length);
+         
+         // Process all mermaid diagrams
+         if (existingMermaidDivs.length > 0) {
+           try {
+             mermaid.run();
+           } catch (error) {
+             console.warn('Mermaid initialization error:', error);
+             // Fallback: try to render each diagram individually
+             existingMermaidDivs.forEach(function(element, index) {
+               try {
+                 const id = 'mermaid-' + Date.now() + '-' + index;
+                 const originalId = element.id;
+                 element.id = id;
+                 
+                 const content = element.textContent || element.innerText;
+                 console.log('Rendering diagram:', id, content.substring(0, 50));
+                 
+                 mermaid.render(id + '-svg', content).then(function(result) {
+                   element.innerHTML = result.svg;
+                   element.setAttribute('data-processed', 'true');
+                 }).catch(function(err) {
+                   console.warn('Failed to render mermaid diagram:', err);
+                   element.innerHTML = '<div class="mermaid-error">Error rendering diagram: ' + err.message + '</div>';
+                 });
+               } catch (err) {
+                 console.warn('Failed to process individual mermaid diagram:', err);
+                 element.innerHTML = '<div class="mermaid-error">Processing error: ' + err.message + '</div>';
+               }
+             });
+           }
+         }
       });
       
-      // Re-render Mermaid diagrams when content changes
-      document.addEventListener('DOMContentLoaded', function() {
-        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
-      });
+      // Additional fallback for dynamic content
+      function renderMermaidDiagrams() {
+        const diagrams = document.querySelectorAll('.mermaid:not([data-processed])');
+        diagrams.forEach(function(diagram) {
+          diagram.setAttribute('data-processed', 'true');
+        });
+        
+        if (diagrams.length > 0) {
+          mermaid.run();
+        }
+      }
+      
+      // Handle potential late loading
+      setTimeout(renderMermaidDiagrams, 1000);
     </script>
   </body>
 </html> 
