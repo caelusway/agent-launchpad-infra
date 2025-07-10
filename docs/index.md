@@ -299,7 +299,20 @@ flowchart TB
 </div>
 
 <script>
-(function() {
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize modal functionality
+  initializeZoomModal();
+});
+
+// Also try to initialize when the script loads (fallback)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeZoomModal);
+} else {
+  initializeZoomModal();
+}
+
+function initializeZoomModal() {
   // Get modal elements
   const modal = document.getElementById('diagram-modal');
   const btn = document.getElementById('zoom-diagram-btn');
@@ -308,6 +321,13 @@ flowchart TB
   const resetZoomBtn = document.getElementById('reset-zoom');
   const downloadBtn = document.getElementById('download-diagram');
   const copyLinkBtn = document.getElementById('copy-link');
+
+  // Check if elements exist
+  if (!modal || !btn || !span || !modalContent) {
+    console.log('Modal elements not found, retrying in 1 second...');
+    setTimeout(initializeZoomModal, 1000);
+    return;
+  }
 
   // Enhanced Mermaid diagram for modal (with better styling and larger size)
   const fullDiagramCode = `
@@ -472,16 +492,27 @@ flowchart TB
 
   // When the user clicks the button, open the modal
   btn.onclick = function() {
+    console.log('Zoom button clicked!');
     modalContent.innerHTML = '<div class="mermaid" style="width: 100%; min-height: 600px;">' + fullDiagramCode + '</div>';
     modal.style.display = 'block';
     
-    // Re-render mermaid in modal
-    if (typeof mermaid !== 'undefined') {
-      mermaid.init(undefined, modalContent.querySelector('.mermaid'));
-    }
-    
-    // Add zoom and pan functionality
-    setTimeout(addZoomPanFunctionality, 500);
+    // Re-render mermaid in modal with proper initialization
+    setTimeout(function() {
+      if (typeof mermaid !== 'undefined') {
+        console.log('Mermaid is available, rendering diagram...');
+        const element = modalContent.querySelector('.mermaid');
+        if (element) {
+          mermaid.init(undefined, element);
+          console.log('Mermaid diagram rendered');
+          // Add zoom and pan functionality after rendering
+          setTimeout(addZoomPanFunctionality, 1000);
+        }
+      } else {
+        console.log('Mermaid not available, using fallback...');
+        // Fallback: show the raw mermaid code as text if mermaid isn't available
+        modalContent.innerHTML = '<pre style="white-space: pre-wrap; font-family: monospace; padding: 20px; background: #f5f5f5; border-radius: 5px;">' + fullDiagramCode + '</pre>';
+      }
+    }, 100);
   }
 
   // When the user clicks on <span> (x), close the modal
@@ -507,8 +538,14 @@ flowchart TB
 
   // Add zoom and pan functionality
   function addZoomPanFunctionality() {
+    console.log('Adding zoom and pan functionality...');
     const svgElement = modalContent.querySelector('svg');
-    if (!svgElement) return;
+    if (!svgElement) {
+      console.log('SVG element not found, retrying...');
+      setTimeout(addZoomPanFunctionality, 500);
+      return;
+    }
+    console.log('SVG element found, adding interactivity...');
 
     let scale = 1;
     let translateX = 0;
@@ -578,12 +615,16 @@ flowchart TB
 
     // Set initial cursor
     modalContent.style.cursor = 'grab';
+    console.log('Zoom and pan functionality added successfully!');
   }
 
   // Download functionality
   downloadBtn.onclick = function() {
     const svgElement = modalContent.querySelector('svg');
-    if (!svgElement) return;
+    if (!svgElement) {
+      alert('Please wait for the diagram to load before downloading.');
+      return;
+    }
 
     // Create canvas and convert SVG to PNG
     const canvas = document.createElement('canvas');
@@ -664,9 +705,22 @@ flowchart TB
         max-height: 70vh;
       }
     }
-  \`;
-  document.head.appendChild(style);
-})();
+     \`;
+   document.head.appendChild(style);
+
+   console.log('Zoom modal initialized successfully!');
+}
+
+// Add a simple test function to verify the script is working
+window.testZoomModal = function() {
+  const btn = document.getElementById('zoom-diagram-btn');
+  if (btn) {
+    btn.click();
+    return 'Zoom modal test clicked!';
+  } else {
+    return 'Zoom button not found!';
+  }
+};
 </script>
 
 ---
