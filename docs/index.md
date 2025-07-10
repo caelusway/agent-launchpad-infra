@@ -304,8 +304,8 @@ flowchart TB
 </div>
 
 <script>
-// Simple modal functions that work reliably
-function openDiagramModal() {
+// Global functions that are available immediately when the page loads
+window.openDiagramModal = function() {
   console.log('Opening diagram modal...');
   const modal = document.getElementById('diagram-modal');
   const modalContent = document.getElementById('modal-content');
@@ -736,7 +736,7 @@ flowchart TB
   console.log('Modal opened successfully!');
 }
 
-function closeDiagramModal() {
+window.closeDiagramModal = function() {
   const modal = document.getElementById('diagram-modal');
   if (modal) {
     modal.style.display = 'none';
@@ -744,7 +744,7 @@ function closeDiagramModal() {
   }
 }
 
-function resetDiagramView() {
+window.resetDiagramView = function() {
   const modalContent = document.getElementById('modal-content');
   if (modalContent) {
     modalContent.scrollTo(0, 0);
@@ -752,7 +752,7 @@ function resetDiagramView() {
   }
 }
 
-function downloadDiagram() {
+window.downloadDiagram = function() {
   // Create a simple text version for download
   const content = `Multi-Agent Infrastructure at Scale - Complete System Flow
 
@@ -780,7 +780,7 @@ For more details visit: ${window.location.href}`;
   console.log('Diagram content downloaded');
 }
 
-function copyDiagramLink() {
+window.copyDiagramLink = function() {
   const url = window.location.href + '#system-flow';
   if (navigator.clipboard) {
     navigator.clipboard.writeText(url).then(function() {
@@ -794,72 +794,75 @@ function copyDiagramLink() {
   console.log('Link copy attempted');
 }
 
+  // Setup event listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
   // Close modal when clicking outside
-window.onclick = function(event) {
-  const modal = document.getElementById('diagram-modal');
-  if (event.target === modal) {
-    closeDiagramModal();
-  }
-}
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(event) {
-  if (event.key === 'Escape') {
-    closeDiagramModal();
-  }
-});
-
-// Add CSS for modal animations
-const style = document.createElement('style');
-style.textContent = `
-  #diagram-modal {
-    animation: fadeIn 0.3s ease-in-out;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  .enhanced-diagram-content {
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-  
-  .diagram-section {
-    animation: slideIn 0.5s ease-out;
-  }
-  
-  @keyframes slideIn {
-    from { 
-      opacity: 0; 
-      transform: translateY(20px); 
-    }
-    to { 
-      opacity: 1; 
-      transform: translateY(0); 
+  window.onclick = function(event) {
+    const modal = document.getElementById('diagram-modal');
+    if (event.target === modal) {
+      window.closeDiagramModal();
     }
   }
-  
-  @media (max-width: 768px) {
-    #diagram-modal > div {
-      width: 98%;
-      margin: 1% auto;
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      window.closeDiagramModal();
+    }
+  });
+
+  // Add CSS for modal animations
+  const style = document.createElement('style');
+  style.textContent = `
+    #diagram-modal {
+      animation: fadeIn 0.3s ease-in-out;
     }
     
-    #modal-content {
-      padding: 10px;
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .enhanced-diagram-content {
       max-height: 70vh;
+      overflow-y: auto;
     }
     
-    .diagram-section div[style*="grid-template-columns"] {
-      grid-template-columns: 1fr !important;
+    .diagram-section {
+      animation: slideIn 0.5s ease-out;
     }
-  }
-`;
-document.head.appendChild(style);
+    
+    @keyframes slideIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
+    }
+    
+    @media (max-width: 768px) {
+      #diagram-modal > div {
+        width: 98%;
+        margin: 1% auto;
+      }
+      
+      #modal-content {
+        padding: 10px;
+        max-height: 70vh;
+      }
+      
+      .diagram-section div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 
-console.log('Simple modal system loaded successfully!');
+  console.log('Simple modal system loaded successfully!');
+});
 </script>
 
 ---
