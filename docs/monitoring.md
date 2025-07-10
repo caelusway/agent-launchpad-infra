@@ -8,7 +8,7 @@ description: "Comprehensive monitoring, metrics, and alerting configuration"
 
 ## 🎯 Monitoring Overview
 
-Comprehensive monitoring is essential for running AI agents in production. This guide covers setting up observability, metrics collection, alerting, and performance monitoring for the AI Agent Launchpad.
+Comprehensive monitoring is essential for running AI agents in production. This guide covers setting up observability, metrics collection, alerting, and performance monitoring for the Multi-Agent Infrastructure at Scale.
 
 ## 🏗️ Monitoring Architecture
 
@@ -387,7 +387,7 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
 {
   "dashboard": {
     "id": null,
-    "title": "AI Agent Launchpad - System Overview",
+    "title": "Multi-Agent Infrastructure at Scale - System Overview",
     "tags": ["agent-launchpad", "overview"],
     "timezone": "browser",
     "panels": [

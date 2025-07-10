@@ -8,7 +8,7 @@ description: "Production deployment strategies and operational procedures"
 
 ## 🎯 Deployment Overview
 
-This guide covers production deployment strategies, operational procedures, and best practices for running the AI Agent Launchpad in production environments.
+This guide covers production deployment strategies, operational procedures, and best practices for running the Multi-Agent Infrastructure at Scale in production environments.
 
 ## 🏗️ Production Architecture
 
@@ -477,7 +477,7 @@ data:
 ```json
 {
   "dashboard": {
-    "title": "AI Agent Launchpad - System Overview",
+    "title": "Multi-Agent Infrastructure at Scale - System Overview",
     "panels": [
       {
         "title": "API Request Rate",

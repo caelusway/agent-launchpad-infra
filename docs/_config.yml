@@ -1,4 +1,4 @@
-name: "AI Agent Launchpad Documentation"
+name: "Multi-Agent Infrastructure at Scale Documentation"
 description: "Complete technical documentation for deploying and managing Eliza-based AI agents"
 baseurl: "/agent-launchpad-infra"
 url: "https://yourusername.github.io"
@@ -41,8 +41,8 @@ kramdown:
   parse_span_html: true
 
 # SEO
-title: "AI Agent Launchpad Documentation"
-author: "AI Agent Launchpad Team"
+title: "Multi-Agent Infrastructure at Scale Documentation"
+author: "Multi-Agent Infrastructure at Scale Team"
 email: "support@your-domain.com"
 twitter_username: "yourusername"
 

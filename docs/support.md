@@ -8,7 +8,7 @@ description: "Get help, troubleshooting guides, and community support"
 
 ## 🎯 Getting Help
 
-Need assistance with the AI Agent Launchpad? We're here to help! Choose the support option that best fits your needs.
+Need assistance with the Multi-Agent Infrastructure at Scale? We're here to help! Choose the support option that best fits your needs.
 
 ## 🚀 Quick Start Support
 
@@ -199,9 +199,9 @@ kubectl logs -n agents your-agent-pod | grep -i "memory\|heap\|gc"
 
 ```bash
 #!/bin/bash
-# AI Agent Launchpad Diagnostic Tool
+# Multi-Agent Infrastructure at Scale Diagnostic Tool
 
-echo "🔍 AI Agent Launchpad System Diagnostic"
+echo "🔍 Multi-Agent Infrastructure at Scale System Diagnostic"
 echo "======================================="
 
 # Check API connectivity
@@ -552,4 +552,4 @@ Before reaching out for support, please check:
 - [ ] **Check resources** - Ensure adequate CPU/memory
 - [ ] **Search existing issues** - Someone might have had the same problem
 
-We're here to help you succeed with the AI Agent Launchpad! 🚀 
+We're here to help you succeed with the Multi-Agent Infrastructure at Scale! 🚀 

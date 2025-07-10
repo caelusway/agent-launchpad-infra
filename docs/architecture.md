@@ -8,7 +8,7 @@ description: "Detailed system architecture with flow charts and component docume
 
 ## 🎯 Overview
 
-The AI Agent Launchpad is designed as a scalable, secure infrastructure backend that automates the deployment and management of Eliza-based AI agents. The system follows a microservices architecture with clear separation of concerns and robust security measures.
+The Multi-Agent Infrastructure at Scale is designed as a scalable, secure infrastructure backend that automates the deployment and management of Eliza-based AI agents. The system follows a microservices architecture with clear separation of concerns and robust security measures.
 
 ## 🧩 Core Components
 
@@ -58,13 +58,13 @@ eliza/
 - **Project Templates**: Scaffolding for new projects and plugins
 - **TypeScript Implementation**: 100% TypeScript with modular architecture
 
-### 🟡 Agent Launchpad Services (New Implementation)
+### 🟡 Multi-Agent Infrastructure at Scale Services (New Implementation)
 
 These are the new services built to integrate with the official Eliza framework:
 
 ```typescript
-// Agent Launchpad Backend Structure
-agent-launchpad-backend/
+// Multi-Agent Infrastructure at Scale Backend Structure
+multi-agent-infra-backend/
 ├── src/
 │   ├── controllers/
 │   │   ├── agent.controller.ts

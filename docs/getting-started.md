@@ -8,7 +8,7 @@ description: "Step-by-step guide to set up and deploy your first agent"
 
 ## 🎯 Overview
 
-This guide will walk you through setting up the AI Agent Launchpad infrastructure and deploying your first Eliza-based AI agent. Follow these steps to get up and running in minutes.
+This guide will walk you through setting up the Multi-Agent Infrastructure at Scale infrastructure and deploying your first Eliza-based AI agent. Follow these steps to get up and running in minutes.
 
 ## 📋 Prerequisites
 
@@ -410,7 +410,7 @@ If you encounter issues:
 
 ## 🎉 What's Next?
 
-Congratulations! You've successfully set up the AI Agent Launchpad. Here's what you can do next:
+Congratulations! You've successfully set up the Multi-Agent Infrastructure at Scale. Here's what you can do next:
 
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
 

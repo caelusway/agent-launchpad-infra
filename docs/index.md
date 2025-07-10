@@ -1,12 +1,12 @@
 ---
 layout: default
-title: "AI Agent Launchpad - Home"
+title: "Multi-Agent Infrastructure at Scale - Home"
 description: "Infrastructure backend for automated AI agent deployment and management"
 ---
 
 <div align="center">
 
-# 🚀 AI Agent Launchpad
+# 🚀 Multi-Agent Infrastructure at Scale
 
 **Infrastructure Backend for Automated AI Agent Deployment**
 
@@ -17,9 +17,9 @@ description: "Infrastructure backend for automated AI agent deployment and manag
 
 ---
 
-## 🌟 What is AI Agent Launchpad?
+## 🌟 What is Multi-Agent Infrastructure at Scale?
 
-The **AI Agent Launchpad** is a robust infrastructure backend that automates the deployment and management of [Eliza-based AI agents](https://github.com/elizaos/eliza) through a streamlined interface with Docker and Kubernetes orchestration.
+The **Multi-Agent Infrastructure at Scale** is a robust infrastructure backend that automates the deployment and management of [Eliza-based AI agents](https://github.com/elizaos/eliza) through a streamlined interface with Docker and Kubernetes orchestration.
 
 ### ✨ Key Features
 
@@ -107,48 +107,128 @@ graph TB
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Create Your First AI Agent
 
-Ready to deploy your first AI agent? Get started in minutes:
+Ready to deploy intelligent agents at scale? Create and deploy AI agents in minutes with simple configuration:
 
-<div class="alert alert-info">
-<strong>💡 Prerequisites:</strong> You'll need a Kubernetes cluster, Docker, PostgreSQL database, and container registry access.
-</div>
-
-### 1. Installation
+### 🤖 Discord Trading Bot
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/agent-launchpad-infra.git
-cd agent-launchpad-infra
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your configuration
-
-# Deploy to Kubernetes
-kubectl apply -f k8s/
-```
-
-### 2. Create Your First Agent
-
-```bash
-# Using the API
 curl -X POST https://your-domain.com/api/agents \
   -H "X-API-Key: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
-    "agentName": "my-trading-bot",
-    "description": "AI trading assistant",
-    "plugins": ["@elizaos/plugin-discord", "@elizaos/plugin-web3"],
+    "agentName": "crypto-trading-bot",
+    "description": "AI-powered cryptocurrency trading assistant",
+    "character": {
+      "name": "TradingBot",
+      "bio": "Expert cryptocurrency trader with real-time market analysis",
+      "personality": "Professional, analytical, and helpful"
+    },
+    "plugins": [
+      "@elizaos/plugin-discord",
+      "@elizaos/plugin-web3",
+      "@elizaos/plugin-coingecko"
+    ],
+    "platforms": ["discord"],
     "resources": {
       "memory": "1Gi",
       "cpu": "500m"
+    },
+    "environment": {
+      "DISCORD_TOKEN": "your-discord-token",
+      "COINGECKO_API_KEY": "your-api-key"
     }
   }'
+```
+
+### 💬 Telegram Support Agent
+
+```bash
+curl -X POST https://your-domain.com/api/agents \
+  -H "X-API-Key: your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentName": "support-assistant",
+    "description": "24/7 customer support agent",
+    "character": {
+      "name": "SupportBot",
+      "bio": "Friendly customer support specialist",
+      "personality": "Helpful, patient, and knowledgeable"
+    },
+    "plugins": [
+      "@elizaos/plugin-telegram",
+      "@elizaos/plugin-knowledge-base"
+    ],
+    "platforms": ["telegram"],
+    "resources": {
+      "memory": "512Mi",
+      "cpu": "250m"
+    },
+    "environment": {
+      "TELEGRAM_BOT_TOKEN": "your-telegram-token"
+    }
+  }'
+```
+
+### 🌐 Multi-Platform Agent
+
+```bash
+curl -X POST https://your-domain.com/api/agents \
+  -H "X-API-Key: your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentName": "omni-agent",
+    "description": "Multi-platform AI agent with Web3 capabilities",
+    "character": {
+      "name": "OmniBot",
+      "bio": "Versatile AI assistant across multiple platforms",
+      "personality": "Adaptable, intelligent, and engaging"
+    },
+    "plugins": [
+      "@elizaos/plugin-discord",
+      "@elizaos/plugin-telegram",
+      "@elizaos/plugin-twitter",
+      "@elizaos/plugin-web3"
+    ],
+    "platforms": ["discord", "telegram", "twitter"],
+    "resources": {
+      "memory": "2Gi",
+      "cpu": "1000m"
+    },
+    "scaling": {
+      "minReplicas": 1,
+      "maxReplicas": 5,
+      "targetCPU": 70
+    }
+  }'
+```
+
+### 📊 Agent Status & Management
+
+```bash
+# Check agent status
+curl -X GET https://your-domain.com/api/agents/crypto-trading-bot \
+  -H "X-API-Key: your-api-key"
+
+# Scale agent
+curl -X PATCH https://your-domain.com/api/agents/crypto-trading-bot \
+  -H "X-API-Key: your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resources": {
+      "memory": "2Gi",
+      "cpu": "1000m"
+    },
+    "scaling": {
+      "minReplicas": 2,
+      "maxReplicas": 10
+    }
+  }'
+
+# View agent logs
+curl -X GET https://your-domain.com/api/agents/crypto-trading-bot/logs \
+  -H "X-API-Key: your-api-key"
 ```
 
 <div align="center">
@@ -323,4 +403,4 @@ curl -X POST https://your-domain.com/api/agents \
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Made with ❤️ by the AI Agent Launchpad Team 
+Made with ❤️ by the Multi-Agent Infrastructure at Scale Team 

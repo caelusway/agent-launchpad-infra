@@ -8,7 +8,7 @@ description: "Security architecture, best practices, and compliance for producti
 
 ## 🛡️ Security Overview
 
-The AI Agent Launchpad implements a **simple but solid security approach** focused on essential security controls for infrastructure management. Our security model prioritizes practical protection without overwhelming complexity.
+The Multi-Agent Infrastructure at Scale implements a **simple but solid security approach** focused on essential security controls for infrastructure management. Our security model prioritizes practical protection without overwhelming complexity.
 
 ## 🔑 Authentication & Authorization
 
@@ -656,7 +656,7 @@ curl -H "X-API-Key: $API_KEY" \
 
 ## 📋 Security Summary
 
-The AI Agent Launchpad security implementation provides:
+The Multi-Agent Infrastructure at Scale security implementation provides:
 
 - **🔑 Simple Authentication**: API key-based with proper hashing
 - **🛡️ Container Security**: Vulnerability scanning blocks critical issues

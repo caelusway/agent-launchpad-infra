@@ -1,4 +1,4 @@
-# 🚀 AI Agent Launchpad Documentation
+# 🚀 Multi-Agent Infrastructure at Scale Documentation
 
 ## Complete Technical Architecture & Flow Documentation
 
@@ -19,7 +19,7 @@
 
 ## 🎯 Overview
 
-The **AI Agent Launchpad** is an infrastructure backend platform that enables automated deployment and management of Eliza-based AI agents through a streamlined interface with Docker and Kubernetes orchestration.
+The **Multi-Agent Infrastructure at Scale** is an infrastructure backend platform that enables automated deployment and management of Eliza-based AI agents through a streamlined interface with Docker and Kubernetes orchestration.
 
 ### Key Features
 - 🤖 **Automated Agent Deployment** - Deploy Eliza agents with simple configuration

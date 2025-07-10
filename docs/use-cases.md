@@ -8,7 +8,7 @@ description: "Real-world examples and implementation patterns for AI agent deplo
 
 ## 🎯 Overview
 
-The AI Agent Launchpad supports a wide variety of use cases for deploying Eliza-based AI agents. Here are real-world examples with complete implementation details and best practices.
+The Multi-Agent Infrastructure at Scale supports a wide variety of use cases for deploying Eliza-based AI agents. Here are real-world examples with complete implementation details and best practices.
 
 ## 🤖 Discord Trading Bots {#discord-trading}
 
