@@ -17,6 +17,11 @@ description: "Infrastructure backend for automated AI agent deployment and manag
 
 ---
 
+## 🌟 What is Multi-Agent Infrastructure at Scale?
+
+The **Multi-Agent Infrastructure at Scale** is a robust infrastructure backend that automates the deployment and management of [Eliza-based AI agents](https://github.com/elizaos/eliza) through a streamlined interface with Docker and Kubernetes orchestration.
+
+
 ## 🔄 Complete System Flow
 
 <div style="position: relative;">
@@ -178,7 +183,7 @@ flowchart TB
 
 <!-- Zoom Button -->
 <div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
-<button id="zoom-diagram-btn" style="
+<button onclick="openDiagramModal()" style="
   background: #007bff;
   color: white;
   border: none;
@@ -237,7 +242,7 @@ flowchart TB
       align-items: center;
     ">
       <h3 style="margin: 0; font-size: 20px;">🔄 Complete System Flow - Full View</h3>
-      <span id="close-modal" style="
+      <span onclick="closeDiagramModal()" style="
         font-size: 28px;
         cursor: pointer;
         color: white;
@@ -266,7 +271,7 @@ flowchart TB
         <strong>Interactive Features:</strong> Scroll to zoom • Drag to pan • Click nodes for details
       </p>
       <div style="margin-top: 10px;">
-        <button id="reset-zoom" style="
+        <button onclick="resetDiagramView()" style="
           background: #28a745;
           color: white;
           border: none;
@@ -275,7 +280,7 @@ flowchart TB
           cursor: pointer;
           margin: 0 5px;
         ">🔄 Reset View</button>
-        <button id="download-diagram" style="
+        <button onclick="downloadDiagram()" style="
           background: #17a2b8;
           color: white;
           border: none;
@@ -284,7 +289,7 @@ flowchart TB
           cursor: pointer;
           margin: 0 5px;
         ">💾 Download PNG</button>
-        <button id="copy-link" style="
+        <button onclick="copyDiagramLink()" style="
           background: #6c757d;
           color: white;
           border: none;
@@ -299,38 +304,276 @@ flowchart TB
 </div>
 
 <script>
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize modal functionality
-  initializeZoomModal();
-});
-
-// Also try to initialize when the script loads (fallback)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeZoomModal);
-} else {
-  initializeZoomModal();
-}
-
-function initializeZoomModal() {
-  // Get modal elements
+// Simple modal functions that work reliably
+function openDiagramModal() {
+  console.log('Opening diagram modal...');
   const modal = document.getElementById('diagram-modal');
-  const btn = document.getElementById('zoom-diagram-btn');
-  const span = document.getElementById('close-modal');
   const modalContent = document.getElementById('modal-content');
-  const resetZoomBtn = document.getElementById('reset-zoom');
-  const downloadBtn = document.getElementById('download-diagram');
-  const copyLinkBtn = document.getElementById('copy-link');
-
-  // Check if elements exist
-  if (!modal || !btn || !span || !modalContent) {
-    console.log('Modal elements not found, retrying in 1 second...');
-    setTimeout(initializeZoomModal, 1000);
+  
+  if (!modal || !modalContent) {
+    alert('Modal elements not found. Please refresh the page and try again.');
     return;
   }
 
-  // Enhanced Mermaid diagram for modal (with better styling and larger size)
-  const fullDiagramCode = `
+  // Enhanced diagram content for modal
+  const fullDiagramContent = `
+    <div style="text-align: center; padding: 20px;">
+      <h3>🔄 Complete System Flow - Enhanced View</h3>
+      <p>Here's the comprehensive system architecture with detailed component descriptions:</p>
+    </div>
+    
+    <div class="enhanced-diagram-content" style="
+      padding: 20px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 10px;
+      margin: 20px 0;
+    ">
+      
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 10px;">👤 User Layer</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+            <strong>👤 User/Developer</strong><br/>
+            • Web Interface Access<br/>
+            • API Integration<br/>
+            • Authentication Required
+          </div>
+          <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+            <strong>🌐 Web Interface</strong><br/>
+            • React Dashboard<br/>
+            • Real-time Updates<br/>
+            • Mobile Responsive
+          </div>
+          <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+            <strong>🔌 REST API</strong><br/>
+            • RESTful Endpoints<br/>
+            • GraphQL Support<br/>
+            • Rate Limited
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #4caf50; border-bottom: 2px solid #4caf50; padding-bottom: 10px;">🔐 Authentication & Security</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+            <strong>🔑 Supabase Auth</strong><br/>
+            • OAuth Providers<br/>
+            • Email/Password<br/>
+            • Magic Links<br/>
+            • MFA Support
+          </div>
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+            <strong>🎫 JWT Tokens</strong><br/>
+            • Auto-refresh<br/>
+            • Secure Claims<br/>
+            • Role-based<br/>
+            • Expiration Management
+          </div>
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+            <strong>🛡️ Row-Level Security</strong><br/>
+            • Data Isolation<br/>
+            • User-based Policies<br/>
+            • Automatic Enforcement
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #ff9800; border-bottom: 2px solid #ff9800; padding-bottom: 10px;">📊 Database & Storage</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+            <strong>🗄️ Supabase Database</strong><br/>
+            • PostgreSQL Engine<br/>
+            • Real-time Subscriptions<br/>
+            • Automatic Backups<br/>
+            • Point-in-time Recovery
+          </div>
+          <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+            <strong>🤖 Agents Table</strong><br/>
+            • Configuration Storage<br/>
+            • Status Tracking<br/>
+            • Metadata Management
+          </div>
+          <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+            <strong>📈 Metrics & Logs</strong><br/>
+            • Performance Data<br/>
+            • Time-series Storage<br/>
+            • Analytics Ready<br/>
+            • Structured Logging
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #9c27b0; border-bottom: 2px solid #9c27b0; padding-bottom: 10px;">🤖 Agent Management</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+            <strong>⚙️ Agent Service</strong><br/>
+            • Lifecycle Management<br/>
+            • Configuration Validation<br/>
+            • Deployment Orchestration
+          </div>
+          <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+            <strong>🎭 Character Configuration</strong><br/>
+            • Personality Definition<br/>
+            • Bio & Instructions<br/>
+            • Behavior Patterns
+          </div>
+          <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+            <strong>🔌 Plugin Management</strong><br/>
+            • Extension Management<br/>
+            • Dependency Resolution<br/>
+            • Version Control<br/>
+            • Secret Management
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #009688; border-bottom: 2px solid #009688; padding-bottom: 10px;">🏗️ Deployment Pipeline</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #e0f2f1; padding: 15px; border-radius: 8px; border-left: 4px solid #009688;">
+            <strong>📦 Container Build</strong><br/>
+            • Eliza Framework<br/>
+            • Plugin Integration<br/>
+            • Multi-stage Build<br/>
+            • Optimization
+          </div>
+          <div style="background: #e0f2f1; padding: 15px; border-radius: 8px; border-left: 4px solid #009688;">
+            <strong>🛡️ Security Scan</strong><br/>
+            • Trivy Vulnerability Check<br/>
+            • SAST Analysis<br/>
+            • License Compliance<br/>
+            • Policy Enforcement
+          </div>
+          <div style="background: #e0f2f1; padding: 15px; border-radius: 8px; border-left: 4px solid #009688;">
+            <strong>☸️ Kubernetes Deploy</strong><br/>
+            • Pod Management<br/>
+            • Service Discovery<br/>
+            • Secret Injection<br/>
+            • Health Checks
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #3f51b5; border-bottom: 2px solid #3f51b5; padding-bottom: 10px;">🌐 Platform Integrations</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #e8eaf6; padding: 15px; border-radius: 8px; border-left: 4px solid #3f51b5;">
+            <strong>💬 Discord Bot</strong><br/>
+            • Real-time Chat<br/>
+            • Slash Commands<br/>
+            • Voice Integration<br/>
+            • Community Management
+          </div>
+          <div style="background: #e8eaf6; padding: 15px; border-radius: 8px; border-left: 4px solid #3f51b5;">
+            <strong>📱 Telegram Bot</strong><br/>
+            • Inline Keyboards<br/>
+            • File Sharing<br/>
+            • Channel Support<br/>
+            • Bot API v6.0
+          </div>
+          <div style="background: #e8eaf6; padding: 15px; border-radius: 8px; border-left: 4px solid #3f51b5;">
+            <strong>🐦 Social & Real-time</strong><br/>
+            • Twitter Bot Integration<br/>
+            • WebSocket Updates<br/>
+            • Event Streaming<br/>
+            • Low Latency Comm
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #e91e63; border-bottom: 2px solid #e91e63; padding-bottom: 10px;">📊 Monitoring & Analytics</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #fce4ec; padding: 15px; border-radius: 8px; border-left: 4px solid #e91e63;">
+            <strong>📈 Real-time Metrics</strong><br/>
+            • Performance Tracking<br/>
+            • Health Monitoring<br/>
+            • Custom Dashboards<br/>
+            • Alert Generation
+          </div>
+          <div style="background: #fce4ec; padding: 15px; border-radius: 8px; border-left: 4px solid #e91e63;">
+            <strong>📋 Log Streaming</strong><br/>
+            • Centralized Logging<br/>
+            • Log Aggregation<br/>
+            • Search & Filter<br/>
+            • Real-time Analysis
+          </div>
+          <div style="background: #fce4ec; padding: 15px; border-radius: 8px; border-left: 4px solid #e91e63;">
+            <strong>📊 Prometheus & Grafana</strong><br/>
+            • Metrics Collection<br/>
+            • Time-series Database<br/>
+            • Custom Dashboards<br/>
+            • Alert Management
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #f44336; border-bottom: 2px solid #f44336; padding-bottom: 10px;">🚨 Security & Compliance</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+            <strong>🔍 Threat Detection</strong><br/>
+            • Anomaly Detection<br/>
+            • Pattern Recognition<br/>
+            • ML-based Analysis<br/>
+            • Risk Assessment
+          </div>
+          <div style="background: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+            <strong>🚨 Security Events</strong><br/>
+            • Audit Logging<br/>
+            • Event Correlation<br/>
+            • Incident Tracking<br/>
+            • Compliance Reports
+          </div>
+          <div style="background: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+            <strong>🚑 Incident Response</strong><br/>
+            • Auto-remediation<br/>
+            • Escalation Policies<br/>
+            • Recovery Procedures<br/>
+            • GDPR & SOC 2 Ready
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-section" style="margin-bottom: 30px;">
+        <h4 style="color: #8bc34a; border-bottom: 2px solid #8bc34a; padding-bottom: 10px;">⚖️ Auto-scaling & Load Balancing</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px;">
+          <div style="background: #f1f8e9; padding: 15px; border-radius: 8px; border-left: 4px solid #8bc34a;">
+            <strong>📊 Horizontal Pod Autoscaler</strong><br/>
+            • CPU-based Scaling<br/>
+            • Memory-based Scaling<br/>
+            • Custom Metrics<br/>
+            • Predictive Scaling
+          </div>
+          <div style="background: #f1f8e9; padding: 15px; border-radius: 8px; border-left: 4px solid #8bc34a;">
+            <strong>⚖️ Load Balancer</strong><br/>
+            • Traffic Distribution<br/>
+            • Health Checks<br/>
+            • SSL Termination<br/>
+            • Failover Support
+          </div>
+          <div style="background: #f1f8e9; padding: 15px; border-radius: 8px; border-left: 4px solid #8bc34a;">
+            <strong>💾 Resource Management</strong><br/>
+            • Resource Quotas<br/>
+            • Limit Ranges<br/>
+            • Priority Classes<br/>
+            • Node Affinity
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.8); border-radius: 10px;">
+        <h4 style="color: #333;">🔄 System Flow Summary</h4>
+        <p style="color: #666; max-width: 800px; margin: 0 auto;">
+          <strong>End-to-End Process:</strong> User Authentication → Agent Configuration → Security Scanning → 
+          Container Deployment → Multi-Platform Integration → Real-time Monitoring → Security Compliance → 
+          Auto-scaling & Optimization
+        </p>
+      </div>
+    </div>`
 flowchart TB
     subgraph "👤 User Layer"
         User[👤 User/Developer<br/>• Web Interface Access<br/>• API Integration<br/>• Authentication Required]
@@ -487,247 +730,140 @@ flowchart TB
     class Discord,Telegram,Twitter,WebSocket platformStyle
     class RealTimeMetrics,LogStreaming,Prometheus,Grafana,SupaRealtime monitorStyle
     class ThreatDetection,SecurityEvents,Compliance,Incident securityStyle
-    class HPA,LoadBalancer,ResourceMgmt scalingStyle
-  `;
-
-  // When the user clicks the button, open the modal
-  btn.onclick = function() {
-    console.log('Zoom button clicked!');
-    modalContent.innerHTML = '<div class="mermaid" style="width: 100%; min-height: 600px;">' + fullDiagramCode + '</div>';
-    modal.style.display = 'block';
-    
-    // Re-render mermaid in modal with proper initialization
-    setTimeout(function() {
-      if (typeof mermaid !== 'undefined') {
-        console.log('Mermaid is available, rendering diagram...');
-        const element = modalContent.querySelector('.mermaid');
-        if (element) {
-          mermaid.init(undefined, element);
-          console.log('Mermaid diagram rendered');
-          // Add zoom and pan functionality after rendering
-          setTimeout(addZoomPanFunctionality, 1000);
-        }
-      } else {
-        console.log('Mermaid not available, using fallback...');
-        // Fallback: show the raw mermaid code as text if mermaid isn't available
-        modalContent.innerHTML = '<pre style="white-space: pre-wrap; font-family: monospace; padding: 20px; background: #f5f5f5; border-radius: 5px;">' + fullDiagramCode + '</pre>';
-      }
-    }, 100);
-  }
-
-  // When the user clicks on <span> (x), close the modal
-  span.onclick = function() {
-    modal.style.display = 'none';
-  }
-
-  // When the user clicks anywhere outside of the modal, close it
-  window.onclick = function(event) {
-    if (event.target == modal) {
-      modal.style.display = 'none';
-    }
-  }
-
-  // Keyboard navigation
-  document.addEventListener('keydown', function(event) {
-    if (modal.style.display === 'block') {
-      if (event.key === 'Escape') {
-        modal.style.display = 'none';
-      }
-    }
-  });
-
-  // Add zoom and pan functionality
-  function addZoomPanFunctionality() {
-    console.log('Adding zoom and pan functionality...');
-    const svgElement = modalContent.querySelector('svg');
-    if (!svgElement) {
-      console.log('SVG element not found, retrying...');
-      setTimeout(addZoomPanFunctionality, 500);
-      return;
-    }
-    console.log('SVG element found, adding interactivity...');
-
-    let scale = 1;
-    let translateX = 0;
-    let translateY = 0;
-    let isDragging = false;
-    let lastX = 0;
-    let lastY = 0;
-
-    // Apply initial transform
-    function updateTransform() {
-      svgElement.style.transform = \`translate(\${translateX}px, \${translateY}px) scale(\${scale})\`;
-    }
-
-    // Zoom functionality
-    modalContent.addEventListener('wheel', function(event) {
-      event.preventDefault();
-      const rect = modalContent.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-
-      const delta = event.deltaY > 0 ? 0.9 : 1.1;
-      const newScale = Math.min(Math.max(0.1, scale * delta), 5);
-
-      // Zoom towards mouse position
-      translateX = x - (x - translateX) * (newScale / scale);
-      translateY = y - (y - translateY) * (newScale / scale);
-      scale = newScale;
-
-      updateTransform();
-    });
-
-    // Pan functionality
-    modalContent.addEventListener('mousedown', function(event) {
-      isDragging = true;
-      lastX = event.clientX;
-      lastY = event.clientY;
-      modalContent.style.cursor = 'grabbing';
-    });
-
-    document.addEventListener('mousemove', function(event) {
-      if (!isDragging) return;
-      
-      const deltaX = event.clientX - lastX;
-      const deltaY = event.clientY - lastY;
-      
-      translateX += deltaX;
-      translateY += deltaY;
-      
-      lastX = event.clientX;
-      lastY = event.clientY;
-      
-      updateTransform();
-    });
-
-    document.addEventListener('mouseup', function() {
-      isDragging = false;
-      modalContent.style.cursor = 'grab';
-    });
-
-    // Reset zoom functionality
-    resetZoomBtn.onclick = function() {
-      scale = 1;
-      translateX = 0;
-      translateY = 0;
-      updateTransform();
-    };
-
-    // Set initial cursor
-    modalContent.style.cursor = 'grab';
-    console.log('Zoom and pan functionality added successfully!');
-  }
-
-  // Download functionality
-  downloadBtn.onclick = function() {
-    const svgElement = modalContent.querySelector('svg');
-    if (!svgElement) {
-      alert('Please wait for the diagram to load before downloading.');
-      return;
-    }
-
-    // Create canvas and convert SVG to PNG
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const svgData = new XMLSerializer().serializeToString(svgElement);
-    const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-    const svgUrl = URL.createObjectURL(svgBlob);
-    
-    const img = new Image();
-    img.onload = function() {
-      canvas.width = img.width * 2; // Higher resolution
-      canvas.height = img.height * 2;
-      ctx.scale(2, 2);
-      ctx.drawImage(img, 0, 0);
-      
-      // Download the image
-      const link = document.createElement('a');
-      link.download = 'multi-agent-infrastructure-system-flow.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      
-      URL.revokeObjectURL(svgUrl);
-    };
-    img.src = svgUrl;
-  };
-
-  // Copy link functionality
-  copyLinkBtn.onclick = function() {
-    const url = window.location.href + '#system-flow';
-    navigator.clipboard.writeText(url).then(function() {
-      const originalText = copyLinkBtn.innerHTML;
-      copyLinkBtn.innerHTML = '✅ Copied!';
-      copyLinkBtn.style.background = '#28a745';
-      setTimeout(function() {
-        copyLinkBtn.innerHTML = originalText;
-        copyLinkBtn.style.background = '#6c757d';
-      }, 2000);
-    });
-  };
-
-  // Add CSS for modal animations
-  const style = document.createElement('style');
-  style.textContent = \`
-    #diagram-modal {
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    #diagram-modal .mermaid svg {
-      transition: transform 0.1s ease-out;
-      cursor: grab;
-    }
-    
-    #diagram-modal .mermaid svg:active {
-      cursor: grabbing;
-    }
-    
-    #zoom-diagram-btn:hover {
-      transform: scale(1.05);
-    }
-    
-    #close-modal:hover {
-      transform: scale(1.1);
-    }
-    
-    @media (max-width: 768px) {
-      #diagram-modal > div {
-        width: 98%;
-        margin: 1% auto;
-      }
-      
-      #modal-content {
-        padding: 10px;
-        max-height: 70vh;
-      }
-    }
-     \`;
-   document.head.appendChild(style);
-
-   console.log('Zoom modal initialized successfully!');
+  // Show the enhanced content
+  modalContent.innerHTML = fullDiagramContent;
+  modal.style.display = 'block';
+  console.log('Modal opened successfully!');
 }
 
-// Add a simple test function to verify the script is working
-window.testZoomModal = function() {
-  const btn = document.getElementById('zoom-diagram-btn');
-  if (btn) {
-    btn.click();
-    return 'Zoom modal test clicked!';
-  } else {
-    return 'Zoom button not found!';
+function closeDiagramModal() {
+  const modal = document.getElementById('diagram-modal');
+  if (modal) {
+    modal.style.display = 'none';
+    console.log('Modal closed');
   }
-};
+}
+
+function resetDiagramView() {
+  const modalContent = document.getElementById('modal-content');
+  if (modalContent) {
+    modalContent.scrollTo(0, 0);
+    console.log('View reset to top');
+  }
+}
+
+function downloadDiagram() {
+  // Create a simple text version for download
+  const content = `Multi-Agent Infrastructure at Scale - Complete System Flow
+
+This comprehensive system includes:
+
+1. User Layer - Web Interface, REST API, Authentication
+2. Authentication & Security - Supabase Auth, JWT Tokens, Row-Level Security  
+3. Database & Storage - Supabase PostgreSQL, Real-time subscriptions
+4. Agent Management - Lifecycle management, Character config, Plugin management
+5. Deployment Pipeline - Container builds, Security scanning, Kubernetes deployment
+6. Platform Integrations - Discord, Telegram, Twitter, WebSocket
+7. Monitoring & Analytics - Real-time metrics, Log streaming, Prometheus/Grafana
+8. Security & Compliance - Threat detection, Incident response, GDPR/SOC 2
+9. Auto-scaling - HPA, Load balancing, Resource management
+
+For more details visit: ${window.location.href}`;
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'multi-agent-infrastructure-system-flow.txt';
+  link.click();
+  URL.revokeObjectURL(url);
+  console.log('Diagram content downloaded');
+}
+
+function copyDiagramLink() {
+  const url = window.location.href + '#system-flow';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() {
+      alert('Link copied to clipboard!');
+    }).catch(function() {
+      prompt('Copy this link:', url);
+    });
+  } else {
+    prompt('Copy this link:', url);
+  }
+  console.log('Link copy attempted');
+}
+
+  // Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('diagram-modal');
+  if (event.target === modal) {
+    closeDiagramModal();
+  }
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeDiagramModal();
+  }
+});
+
+// Add CSS for modal animations
+const style = document.createElement('style');
+style.textContent = `
+  #diagram-modal {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .enhanced-diagram-content {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  .diagram-section {
+    animation: slideIn 0.5s ease-out;
+  }
+  
+  @keyframes slideIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  @media (max-width: 768px) {
+    #diagram-modal > div {
+      width: 98%;
+      margin: 1% auto;
+    }
+    
+    #modal-content {
+      padding: 10px;
+      max-height: 70vh;
+    }
+    
+    .diagram-section div[style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+    }
+  }
+`;
+document.head.appendChild(style);
+
+console.log('Simple modal system loaded successfully!');
 </script>
 
 ---
 
-## 🌟 What is Multi-Agent Infrastructure at Scale?
-
-The **Multi-Agent Infrastructure at Scale** is a robust infrastructure backend that automates the deployment and management of [Eliza-based AI agents](https://github.com/elizaos/eliza) through a streamlined interface with Docker and Kubernetes orchestration.
 
 ### ✨ Key Features
 
