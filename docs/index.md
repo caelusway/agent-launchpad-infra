@@ -31,8 +31,8 @@ The **Multi-Agent Infrastructure at Scale** is a robust infrastructure backend t
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
-<h4>🔒 Security First</h4>
-<p>Container scanning, API authentication, and encrypted storage built-in</p>
+<h4>🔒 Supabase Security</h4>
+<p>Enterprise-grade authentication with OAuth providers, RLS, and real-time updates</p>
 </div>
 
 <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
@@ -65,36 +65,46 @@ The **Multi-Agent Infrastructure at Scale** is a robust infrastructure backend t
 graph TB
     subgraph "Frontend"
         UI[Web Interface]
+        RealTime[Real-time Subscriptions]
     end
     
-    subgraph "API Layer"
-        Gateway[API Gateway]
-        Auth[Authentication]
+    subgraph "Supabase Backend"
+        SupaAuth[Supabase Auth]
+        SupaDB[Supabase Database]
+        SupaStorage[Supabase Storage]
+        SupaRT[Supabase Real-time]
     end
     
-    subgraph "Services"
+    subgraph "Agent Infrastructure"
         Agent[Agent Service]
         Deploy[Deploy Service]
         Monitor[Monitor Service]
     end
     
-    subgraph "Infrastructure"
+    subgraph "Container Platform"
         K8s[Kubernetes]
-        DB[PostgreSQL]
         Registry[Container Registry]
+        Metrics[Prometheus]
     end
     
-    UI --> Gateway
-    Gateway --> Auth
-    Auth --> Agent
+    UI --> SupaAuth
+    UI --> SupaRT
+    RealTime --> SupaRT
+    SupaAuth --> Agent
+    Agent --> SupaDB
     Agent --> Deploy
     Deploy --> Monitor
     Monitor --> K8s
-    K8s --> DB
+    Monitor --> SupaDB
     Deploy --> Registry
+    SupaRT --> SupaDB
+    Agent --> SupaStorage
+    K8s --> Metrics
     
     style UI fill:#e1f5fe
-    style Gateway fill:#fff3e0
+    style SupaAuth fill:#4CAF50
+    style SupaDB fill:#4CAF50
+    style SupaRT fill:#4CAF50
     style Agent fill:#f3e5f5
     style K8s fill:#e8f5e8
 ```
@@ -109,13 +119,77 @@ graph TB
 
 ## 🚀 Create Your First AI Agent
 
-Ready to deploy intelligent agents at scale? Create and deploy AI agents in minutes with simple configuration:
+Ready to deploy intelligent agents at scale? Create and deploy AI agents in minutes with secure JWT authentication and simple configuration:
+
+### 🔐 Supabase Authentication
+
+The platform uses **Supabase Auth** for enterprise-grade authentication with the following benefits:
+
+- **🛡️ Secure**: Industry-standard JWT tokens with automatic key rotation
+- **🔑 Multi-provider**: Email/password, OAuth (Google, GitHub, Discord), and magic links
+- **⏰ Auto-expiring**: Configurable token expiration with automatic refresh
+- **🚀 Real-time**: Database-backed user management with real-time updates
+- **🏢 Enterprise**: Row-level security (RLS) and advanced user management
+
+```bash
+# Email/Password Authentication
+curl -X POST https://your-supabase-url.supabase.co/auth/v1/token?grant_type=password \
+  -H "apikey: your-supabase-anon-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "your-password"
+  }'
+
+# OAuth Authentication (Google, GitHub, etc.)
+curl -X POST https://your-supabase-url.supabase.co/auth/v1/authorize \
+  -H "apikey: your-supabase-anon-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "google",
+    "redirect_to": "https://your-domain.com/auth/callback"
+  }'
+
+# Magic Link Authentication
+curl -X POST https://your-supabase-url.supabase.co/auth/v1/magiclink \
+  -H "apikey: your-supabase-anon-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com"
+  }'
+
+# Response includes Supabase JWT token
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "refresh_token_here",
+  "expires_in": 3600,
+  "token_type": "bearer",
+  "user": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "user_metadata": {
+      "permissions": ["agents:read", "agents:write", "monitoring:read"]
+    }
+  }
+}
+```
 
 ### 🤖 Discord Trading Bot
 
 ```bash
+# Authenticate with Supabase
+curl -X POST https://your-supabase-url.supabase.co/auth/v1/token?grant_type=password \
+  -H "apikey: your-supabase-anon-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "trader@example.com",
+    "password": "your-password"
+  }'
+
+# Create agent using Supabase JWT token
 curl -X POST https://your-domain.com/api/agents \
-  -H "X-API-Key: your-api-key" \
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key" \
   -H "Content-Type: application/json" \
   -d '{
     "agentName": "crypto-trading-bot",
@@ -138,6 +212,10 @@ curl -X POST https://your-domain.com/api/agents \
     "environment": {
       "DISCORD_TOKEN": "your-discord-token",
       "COINGECKO_API_KEY": "your-api-key"
+    },
+    "supabase_config": {
+      "project_ref": "your-project-ref",
+      "database_url": "postgresql://postgres:[password]@db.your-project.supabase.co:5432/postgres"
     }
   }'
 ```
@@ -146,7 +224,8 @@ curl -X POST https://your-domain.com/api/agents \
 
 ```bash
 curl -X POST https://your-domain.com/api/agents \
-  -H "X-API-Key: your-api-key" \
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key" \
   -H "Content-Type: application/json" \
   -d '{
     "agentName": "support-assistant",
@@ -158,7 +237,8 @@ curl -X POST https://your-domain.com/api/agents \
     },
     "plugins": [
       "@elizaos/plugin-telegram",
-      "@elizaos/plugin-knowledge-base"
+      "@elizaos/plugin-knowledge-base",
+      "@elizaos/plugin-supabase"
     ],
     "platforms": ["telegram"],
     "resources": {
@@ -167,6 +247,14 @@ curl -X POST https://your-domain.com/api/agents \
     },
     "environment": {
       "TELEGRAM_BOT_TOKEN": "your-telegram-token"
+    },
+    "supabase_config": {
+      "project_ref": "your-project-ref",
+      "tables": {
+        "conversations": "support_conversations",
+        "knowledge_base": "support_articles",
+        "analytics": "support_analytics"
+      }
     }
   }'
 ```
@@ -175,7 +263,8 @@ curl -X POST https://your-domain.com/api/agents \
 
 ```bash
 curl -X POST https://your-domain.com/api/agents \
-  -H "X-API-Key: your-api-key" \
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key" \
   -H "Content-Type: application/json" \
   -d '{
     "agentName": "omni-agent",
@@ -189,7 +278,8 @@ curl -X POST https://your-domain.com/api/agents \
       "@elizaos/plugin-discord",
       "@elizaos/plugin-telegram",
       "@elizaos/plugin-twitter",
-      "@elizaos/plugin-web3"
+      "@elizaos/plugin-web3",
+      "@elizaos/plugin-supabase"
     ],
     "platforms": ["discord", "telegram", "twitter"],
     "resources": {
@@ -200,6 +290,17 @@ curl -X POST https://your-domain.com/api/agents \
       "minReplicas": 1,
       "maxReplicas": 5,
       "targetCPU": 70
+    },
+    "supabase_config": {
+      "project_ref": "your-project-ref",
+      "real_time": {
+        "enabled": true,
+        "channels": ["agent_status", "user_interactions", "performance_metrics"]
+      },
+      "storage": {
+        "bucket": "agent-assets",
+        "public_access": false
+      }
     }
   }'
 ```
@@ -209,13 +310,15 @@ curl -X POST https://your-domain.com/api/agents \
 #### REST API - Standard Operations
 
 ```bash
-# Check agent status
+# Check agent status (using Supabase Auth)
 curl -X GET https://your-domain.com/api/agents/crypto-trading-bot \
-  -H "X-API-Key: your-api-key"
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key"
 
 # Scale agent
 curl -X PATCH https://your-domain.com/api/agents/crypto-trading-bot \
-  -H "X-API-Key: your-api-key" \
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key" \
   -H "Content-Type: application/json" \
   -d '{
     "resources": {
@@ -230,148 +333,516 @@ curl -X PATCH https://your-domain.com/api/agents/crypto-trading-bot \
 
 # View agent logs
 curl -X GET https://your-domain.com/api/agents/crypto-trading-bot/logs \
-  -H "X-API-Key: your-api-key"
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key"
+
+# Refresh Supabase JWT token
+curl -X POST https://your-supabase-url.supabase.co/auth/v1/token?grant_type=refresh_token \
+  -H "apikey: your-supabase-anon-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "your-refresh-token"
+  }'
+
+# Query agent data directly from Supabase
+curl -X GET https://your-supabase-url.supabase.co/rest/v1/agents?name=eq.crypto-trading-bot \
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key"
+
+# Update agent metadata in Supabase
+curl -X PATCH https://your-supabase-url.supabase.co/rest/v1/agents?id=eq.agent-uuid \
+  -H "Authorization: Bearer supabase-jwt-token" \
+  -H "apikey: your-supabase-anon-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "running",
+    "last_activity": "2024-01-15T10:30:00Z",
+    "performance_metrics": {
+      "cpu_usage": 45.2,
+      "memory_usage": 1024,
+      "requests_per_minute": 150
+    }
+  }'
 ```
 
-#### WebSocket - Real-time Updates
+#### Real-time Updates - Supabase Integration
 
 ```javascript
-// Real-time agent status monitoring
-const statusSocket = new WebSocket('wss://your-domain.com/ws/agents/crypto-trading-bot/status');
+import { createClient } from '@supabase/supabase-js'
 
-statusSocket.onopen = () => {
-  console.log('Connected to agent status stream');
-  // Authenticate WebSocket connection
-  statusSocket.send(JSON.stringify({
-    type: 'auth',
-    apiKey: 'your-api-key'
-  }));
-};
+// Initialize Supabase client
+const supabaseUrl = 'https://your-project.supabase.co'
+const supabaseKey = 'your-supabase-anon-key'
+const supabase = createClient(supabaseUrl, supabaseKey)
 
-statusSocket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  
-  switch(data.type) {
-    case 'status_update':
-      console.log('Agent Status:', data.payload);
-      // Update UI with real-time status
-      updateAgentStatus(data.payload);
-      break;
-      
-    case 'performance_metrics':
-      console.log('Performance:', data.payload);
-      // Update performance charts
-      updateMetricsChart(data.payload);
-      break;
-      
-    case 'scaling_event':
-      console.log('Scaling:', data.payload);
-      // Show scaling notifications
-      showScalingNotification(data.payload);
-      break;
+// Supabase Authentication Helper
+class SupabaseAuthManager {
+  constructor() {
+    this.supabase = supabase;
+    this.session = null;
+    this.setupAuthListener();
   }
-};
 
-// Real-time log streaming
-const logSocket = new WebSocket('wss://your-domain.com/ws/agents/crypto-trading-bot/logs');
-
-logSocket.onmessage = (event) => {
-  const logData = JSON.parse(event.data);
-  
-  // Stream logs to UI in real-time
-  appendLogToUI({
-    timestamp: logData.timestamp,
-    level: logData.level,
-    message: logData.message,
-    source: logData.source
-  });
-};
-
-// System-wide monitoring
-const monitorSocket = new WebSocket('wss://your-domain.com/ws/monitoring/dashboard');
-
-monitorSocket.onmessage = (event) => {
-  const monitoring = JSON.parse(event.data);
-  
-  switch(monitoring.type) {
-    case 'resource_usage':
-      updateResourceCharts(monitoring.payload);
-      break;
+  setupAuthListener() {
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      this.session = session;
       
-    case 'alert':
-      showRealTimeAlert(monitoring.payload);
-      break;
-      
-    case 'deployment_status':
-      updateDeploymentStatus(monitoring.payload);
-      break;
-  }
-};
-```
-
-#### React Component Example
-
-```jsx
-import React, { useState, useEffect } from 'react';
-
-const AgentMonitoringDashboard = ({ agentName, apiKey }) => {
-  const [agentStatus, setAgentStatus] = useState({});
-  const [metrics, setMetrics] = useState({});
-  const [logs, setLogs] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
-
-  useEffect(() => {
-    // WebSocket connection for real-time updates
-    const ws = new WebSocket(`wss://your-domain.com/ws/agents/${agentName}/status`);
-    
-    ws.onopen = () => {
-      setIsConnected(true);
-      ws.send(JSON.stringify({ type: 'auth', apiKey }));
-    };
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      switch(data.type) {
-        case 'status_update':
-          setAgentStatus(data.payload);
+      switch (event) {
+        case 'SIGNED_IN':
+          console.log('User signed in:', session.user);
+          this.setupRealTimeSubscriptions();
           break;
-        case 'performance_metrics':
-          setMetrics(data.payload);
+        case 'SIGNED_OUT':
+          console.log('User signed out');
+          this.cleanupSubscriptions();
           break;
-        case 'log_stream':
-          setLogs(prev => [...prev.slice(-99), data.payload]);
+        case 'TOKEN_REFRESHED':
+          console.log('Token refreshed');
           break;
       }
+    });
+  }
+
+  async signIn(email, password) {
+    const { data, error } = await this.supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    return { data, error };
+  }
+
+  async signInWithOAuth(provider) {
+    const { data, error } = await this.supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: 'https://your-domain.com/auth/callback'
+      }
+    });
+    return { data, error };
+  }
+
+  getAccessToken() {
+    return this.session?.access_token;
+  }
+
+  setupRealTimeSubscriptions() {
+    // Real-time agent status updates
+    this.agentStatusSubscription = this.supabase
+      .channel('agent-status')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'agents',
+        filter: `user_id=eq.${this.session.user.id}`
+      }, (payload) => {
+        console.log('Agent status update:', payload);
+        this.handleAgentStatusUpdate(payload);
+      })
+      .subscribe();
+
+    // Real-time performance metrics
+    this.metricsSubscription = this.supabase
+      .channel('performance-metrics')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'agent_metrics'
+      }, (payload) => {
+        console.log('Performance metrics:', payload);
+        this.handleMetricsUpdate(payload);
+      })
+      .subscribe();
+
+    // Real-time log streaming
+    this.logsSubscription = this.supabase
+      .channel('agent-logs')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'agent_logs',
+        filter: `user_id=eq.${this.session.user.id}`
+      }, (payload) => {
+        console.log('New log entry:', payload);
+        this.handleLogUpdate(payload);
+      })
+      .subscribe();
+
+    // Real-time system alerts
+    this.alertsSubscription = this.supabase
+      .channel('system-alerts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'system_alerts'
+      }, (payload) => {
+        console.log('System alert:', payload);
+        this.handleSystemAlert(payload);
+      })
+      .subscribe();
+  }
+
+  handleAgentStatusUpdate(payload) {
+    const { new: newData, old: oldData, eventType } = payload;
+    
+    switch (eventType) {
+      case 'INSERT':
+        console.log('New agent created:', newData);
+        addAgentToUI(newData);
+        break;
+      case 'UPDATE':
+        console.log('Agent updated:', newData);
+        updateAgentInUI(newData);
+        break;
+      case 'DELETE':
+        console.log('Agent deleted:', oldData);
+        removeAgentFromUI(oldData);
+        break;
+    }
+  }
+
+  handleMetricsUpdate(payload) {
+    const metricsData = payload.new;
+    updateMetricsChart({
+      agentId: metricsData.agent_id,
+      timestamp: metricsData.timestamp,
+      cpu: metricsData.cpu_usage,
+      memory: metricsData.memory_usage,
+      requests: metricsData.requests_per_minute
+    });
+  }
+
+  handleLogUpdate(payload) {
+    const logData = payload.new;
+    appendLogToUI({
+      timestamp: logData.timestamp,
+      level: logData.level,
+      message: logData.message,
+      source: logData.source,
+      agentId: logData.agent_id
+    });
+  }
+
+  handleSystemAlert(payload) {
+    const alertData = payload.new;
+    showRealTimeAlert({
+      id: alertData.id,
+      type: alertData.alert_type,
+      severity: alertData.severity,
+      message: alertData.message,
+      timestamp: alertData.created_at
+    });
+  }
+
+  cleanupSubscriptions() {
+    this.supabase.removeAllChannels();
+  }
+}
+
+// Initialize authentication manager
+const authManager = new SupabaseAuthManager();
+
+// Example usage with agent operations
+async function createAgentWithSupabase(agentConfig) {
+  const token = authManager.getAccessToken();
+  
+  if (!token) {
+    throw new Error('User not authenticated');
+  }
+
+  // Create agent via API
+  const response = await fetch('/api/agents', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'apikey': supabaseKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(agentConfig)
+  });
+
+  // Agent status will be automatically updated via real-time subscription
+  return response.json();
+}
+
+// Real-time presence for collaborative features
+const presenceChannel = supabase.channel('online-users')
+  .on('presence', { event: 'sync' }, () => {
+    const newState = presenceChannel.presenceState();
+    console.log('Online users:', newState);
+  })
+  .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+    console.log('User joined:', key, newPresences);
+  })
+  .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+    console.log('User left:', key, leftPresences);
+  })
+  .subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await presenceChannel.track({
+        user_id: authManager.session?.user.id,
+        online_at: new Date().toISOString(),
+      });
+    }
+  });
+```
+
+#### React Component with Supabase
+
+```jsx
+import React, { useState, useEffect, useCallback } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_ANON_KEY
+);
+
+const AgentMonitoringDashboard = ({ agentName }) => {
+  const [agentStatus, setAgentStatus] = useState({});
+  const [metrics, setMetrics] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [subscriptions, setSubscriptions] = useState([]);
+
+  // Authentication management
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Real-time subscriptions
+  useEffect(() => {
+    if (!user || !agentName) return;
+
+    const setupSubscriptions = async () => {
+      // Subscribe to agent status changes
+      const agentStatusSub = supabase
+        .channel(`agent-status-${agentName}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'agents',
+          filter: `name=eq.${agentName} AND user_id=eq.${user.id}`
+        }, (payload) => {
+          console.log('Agent status update:', payload);
+          if (payload.new) {
+            setAgentStatus(payload.new);
+          }
+        })
+        .subscribe();
+
+      // Subscribe to performance metrics
+      const metricsSub = supabase
+        .channel(`metrics-${agentName}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'agent_metrics',
+          filter: `agent_name=eq.${agentName}`
+        }, (payload) => {
+          console.log('New metrics:', payload);
+          setMetrics(prev => [...prev.slice(-49), payload.new]);
+        })
+        .subscribe();
+
+      // Subscribe to logs
+      const logsSub = supabase
+        .channel(`logs-${agentName}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'agent_logs',
+          filter: `agent_name=eq.${agentName}`
+        }, (payload) => {
+          console.log('New log:', payload);
+          setLogs(prev => [...prev.slice(-99), payload.new]);
+        })
+        .subscribe();
+
+      setSubscriptions([agentStatusSub, metricsSub, logsSub]);
     };
-    
-    ws.onclose = () => setIsConnected(false);
-    
-    return () => ws.close();
-  }, [agentName, apiKey]);
+
+    setupSubscriptions();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      subscriptions.forEach(sub => {
+        supabase.removeChannel(sub);
+      });
+    };
+  }, [user, agentName]);
+
+  // Initial data fetch
+  useEffect(() => {
+    if (!user || !agentName) return;
+
+    const fetchInitialData = async () => {
+      try {
+        // Fetch current agent status
+        const { data: agentData, error: agentError } = await supabase
+          .from('agents')
+          .select('*')
+          .eq('name', agentName)
+          .eq('user_id', user.id)
+          .single();
+
+        if (agentError) throw agentError;
+        setAgentStatus(agentData);
+
+        // Fetch recent metrics
+        const { data: metricsData, error: metricsError } = await supabase
+          .from('agent_metrics')
+          .select('*')
+          .eq('agent_name', agentName)
+          .order('timestamp', { ascending: false })
+          .limit(50);
+
+        if (metricsError) throw metricsError;
+        setMetrics(metricsData.reverse());
+
+        // Fetch recent logs
+        const { data: logsData, error: logsError } = await supabase
+          .from('agent_logs')
+          .select('*')
+          .eq('agent_name', agentName)
+          .order('timestamp', { ascending: false })
+          .limit(100);
+
+        if (logsError) throw logsError;
+        setLogs(logsData.reverse());
+
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+      }
+    };
+
+    fetchInitialData();
+  }, [user, agentName]);
+
+  // Agent operations
+  const scaleAgent = async (replicas) => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .update({ 
+          replicas: replicas,
+          updated_at: new Date().toISOString()
+        })
+        .eq('name', agentName)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      console.log('Agent scaled successfully');
+    } catch (error) {
+      console.error('Error scaling agent:', error);
+    }
+  };
+
+  const pauseAgent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .update({ 
+          status: 'paused',
+          updated_at: new Date().toISOString()
+        })
+        .eq('name', agentName)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      console.log('Agent paused successfully');
+    } catch (error) {
+      console.error('Error pausing agent:', error);
+    }
+  };
+
+  const getLatestMetrics = () => {
+    return metrics.length > 0 ? metrics[metrics.length - 1] : {};
+  };
+
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="auth-required">
+        <h3>Authentication Required</h3>
+        <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}>
+          Sign in with Google
+        </button>
+      </div>
+    );
+  }
+
+  const latestMetrics = getLatestMetrics();
 
   return (
     <div className="agent-dashboard">
       <div className="status-indicator">
-        <span className={`status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
-          {isConnected ? '🟢 Live' : '🔴 Offline'}
+        <span className={`status-badge ${agentStatus.status}`}>
+          🟢 {agentStatus.status} - Supabase Connected
+        </span>
+        <span className="user-info">
+          User: {user.email}
         </span>
       </div>
       
       <div className="agent-info">
         <h3>{agentName}</h3>
         <p>Status: {agentStatus.status}</p>
-        <p>CPU: {metrics.cpu}%</p>
-        <p>Memory: {metrics.memory}MB</p>
+        <p>CPU: {latestMetrics.cpu_usage}%</p>
+        <p>Memory: {latestMetrics.memory_usage}MB</p>
         <p>Replicas: {agentStatus.replicas}</p>
+        <p>Last Updated: {new Date(agentStatus.updated_at).toLocaleString()}</p>
+      </div>
+
+      <div className="agent-controls">
+        <button onClick={() => scaleAgent(agentStatus.replicas + 1)}>
+          Scale Up
+        </button>
+        <button onClick={() => scaleAgent(Math.max(1, agentStatus.replicas - 1))}>
+          Scale Down
+        </button>
+        <button onClick={pauseAgent}>
+          Pause Agent
+        </button>
+      </div>
+      
+      <div className="metrics-chart">
+        <h4>Performance Metrics (Real-time)</h4>
+        <div className="metrics-grid">
+          {metrics.slice(-10).map((metric, index) => (
+            <div key={index} className="metric-point">
+              <span className="time">{new Date(metric.timestamp).toLocaleTimeString()}</span>
+              <span className="value">CPU: {metric.cpu_usage}%</span>
+              <span className="value">Memory: {metric.memory_usage}MB</span>
+            </div>
+          ))}
+        </div>
       </div>
       
       <div className="log-stream">
-        <h4>Live Logs</h4>
+        <h4>Live Logs (Supabase Real-time)</h4>
         <div className="log-container">
-          {logs.map((log, index) => (
+          {logs.slice(-20).map((log, index) => (
             <div key={index} className={`log-entry ${log.level}`}>
-              <span className="timestamp">{log.timestamp}</span>
+              <span className="timestamp">{new Date(log.timestamp).toLocaleString()}</span>
+              <span className="level">[{log.level}]</span>
               <span className="message">{log.message}</span>
             </div>
           ))}
@@ -384,25 +855,158 @@ const AgentMonitoringDashboard = ({ agentName, apiKey }) => {
 export default AgentMonitoringDashboard;
 ```
 
-#### WebSocket Events Available
+#### Supabase Database Schema & Events
+
+```sql
+-- Core database tables for Supabase integration
+
+-- Users table (managed by Supabase Auth)
+CREATE TABLE auth.users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR NOT NULL UNIQUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Agents table
+CREATE TABLE public.agents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  name VARCHAR NOT NULL,
+  description TEXT,
+  status VARCHAR DEFAULT 'pending',
+  replicas INTEGER DEFAULT 1,
+  character JSONB,
+  plugins TEXT[],
+  platforms TEXT[],
+  resources JSONB,
+  environment JSONB,
+  supabase_config JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  UNIQUE(user_id, name)
+);
+
+-- Agent metrics table for performance tracking
+CREATE TABLE public.agent_metrics (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID REFERENCES public.agents(id) ON DELETE CASCADE,
+  agent_name VARCHAR NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  cpu_usage DECIMAL(5,2),
+  memory_usage INTEGER,
+  requests_per_minute INTEGER,
+  response_time_ms DECIMAL(8,2),
+  error_count INTEGER DEFAULT 0
+);
+
+-- Agent logs table for real-time log streaming
+CREATE TABLE public.agent_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID REFERENCES public.agents(id) ON DELETE CASCADE,
+  agent_name VARCHAR NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  level VARCHAR NOT NULL,
+  message TEXT NOT NULL,
+  source VARCHAR,
+  metadata JSONB
+);
+
+-- System alerts table
+CREATE TABLE public.system_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  alert_type VARCHAR NOT NULL,
+  severity VARCHAR NOT NULL,
+  message TEXT NOT NULL,
+  affected_agent_id UUID REFERENCES public.agents(id),
+  resolved BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  resolved_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Row Level Security (RLS) policies
+ALTER TABLE public.agents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agent_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.agent_logs ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for user data isolation
+CREATE POLICY "Users can only see their own agents" ON public.agents
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only see their own metrics" ON public.agent_metrics
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only see their own logs" ON public.agent_logs
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Real-time subscriptions setup
+ALTER PUBLICATION supabase_realtime ADD TABLE public.agents;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.agent_metrics;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.agent_logs;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.system_alerts;
+```
 
 ```javascript
-// Agent-specific events
-const agentEvents = {
-  'status_update': 'Agent status changes (running, stopped, error)',
-  'performance_metrics': 'CPU, Memory, Network usage in real-time',
-  'scaling_event': 'Auto-scaling up/down events',
-  'health_check': 'Health check results',
-  'log_stream': 'Real-time log streaming',
-  'error_alert': 'Critical errors and exceptions'
+// Supabase Real-time Events
+const supabaseEvents = {
+  // Postgres changes events
+  'postgres_changes': {
+    'INSERT': 'New record inserted',
+    'UPDATE': 'Record updated',
+    'DELETE': 'Record deleted'
+  },
+  
+  // Presence events for collaborative features
+  'presence': {
+    'sync': 'Presence state synchronized',
+    'join': 'User joined',
+    'leave': 'User left'
+  },
+  
+  // Custom broadcast events
+  'broadcast': {
+    'agent_command': 'Real-time agent commands',
+    'deployment_update': 'Deployment status updates',
+    'system_notification': 'System-wide notifications'
+  }
 };
 
-// System-wide events
-const systemEvents = {
-  'resource_usage': 'Cluster resource utilization',
-  'deployment_status': 'Deployment progress and status',
-  'alert': 'System-wide alerts and notifications',
-  'performance_summary': 'Aggregated performance metrics'
+// Supabase JWT Token Structure
+const supabaseJWTPayload = {
+  'aud': 'authenticated',               // Audience
+  'exp': 1234571490,                   // Expiration timestamp
+  'iat': 1234567890,                   // Issued at timestamp
+  'iss': 'https://your-project.supabase.co/auth/v1', // Issuer
+  'sub': 'user-uuid',                  // Subject (user ID)
+  'email': 'user@example.com',         // User email
+  'phone': '',                         // User phone
+  'app_metadata': {                    // Application metadata
+    'provider': 'email',
+    'providers': ['email']
+  },
+  'user_metadata': {                   // User metadata
+    'permissions': [
+      'agents:read',
+      'agents:write',
+      'monitoring:read',
+      'logs:read'
+    ]
+  },
+  'role': 'authenticated',             // User role
+  'aal': 'aal1',                       // Authentication Assurance Level
+  'amr': [{ 'method': 'password', 'timestamp': 1234567890 }], // Auth methods
+  'session_id': 'session-uuid'         // Session identifier
+};
+
+// Environment variables for Supabase
+const supabaseConfig = {
+  'SUPABASE_URL': 'https://your-project.supabase.co',
+  'SUPABASE_ANON_KEY': 'your-anon-key',
+  'SUPABASE_SERVICE_ROLE_KEY': 'your-service-role-key',
+  'DATABASE_URL': 'postgresql://postgres:[password]@db.your-project.supabase.co:5432/postgres'
 };
 ```
 
