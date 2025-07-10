@@ -17,6 +17,172 @@ description: "Infrastructure backend for automated AI agent deployment and manag
 
 ---
 
+## 🔄 Complete System Flow
+
+<div style="width: 100%; max-width: none; overflow-x: auto;">
+
+```mermaid
+flowchart TB
+    subgraph "👤 User Layer"
+        User[👤 User/Developer]
+        WebUI[🌐 Web Interface]
+        API[🔌 REST API]
+    end
+
+    subgraph "🔐 Authentication & Security"
+        SupaAuth[🔑 Supabase Auth<br/>OAuth, Email, Magic Links]
+        JWT[🎫 JWT Tokens<br/>Auto-refresh & Validation]
+        RLS[🛡️ Row-Level Security<br/>Data Isolation]
+    end
+
+    subgraph "📊 Database & Storage"
+        SupaDB[(🗄️ Supabase Database<br/>PostgreSQL + Real-time)]
+        AgentTable[🤖 Agents Table]
+        MetricsTable[📈 Metrics Table]
+        LogsTable[📋 Logs Table]
+        SecretsTable[🔐 Secrets Table]
+    end
+
+    subgraph "🤖 Agent Management"
+        AgentService[⚙️ Agent Service<br/>Creation & Management]
+        CharacterConfig[🎭 Character Configuration<br/>Personality, Bio, Instructions]
+        PluginConfig[🔌 Plugin Configuration<br/>Discord, Telegram, Twitter]
+        SecretMgmt[🔐 Secret Management<br/>API Keys & Tokens]
+    end
+
+    subgraph "🏗️ Deployment Pipeline"
+        ContainerBuild[📦 Container Build<br/>Eliza + Plugins]
+        SecurityScan[🛡️ Security Scan<br/>Trivy Vulnerability Check]
+        Registry[📋 Container Registry<br/>Secure Image Storage]
+        K8sDeploy[☸️ Kubernetes Deploy<br/>Pods, Services, Secrets]
+    end
+
+    subgraph "🌐 Platform Integrations"
+        Discord[💬 Discord Bot<br/>Real-time Chat]
+        Telegram[📱 Telegram Bot<br/>Messaging & Commands]
+        Twitter[🐦 Twitter Bot<br/>Social Engagement]
+        WebSocket[⚡ WebSocket<br/>Real-time Updates]
+    end
+
+    subgraph "📊 Monitoring & Analytics"
+        RealTimeMetrics[📈 Real-time Metrics<br/>Performance & Health]
+        LogStreaming[📋 Log Streaming<br/>Agent Activities]
+        Prometheus[📊 Prometheus<br/>Metrics Collection]
+        Grafana[📈 Grafana<br/>Dashboards & Alerts]
+        SupaRealtime[⚡ Supabase Real-time<br/>Live Updates]
+    end
+
+    subgraph "🚨 Security & Compliance"
+        ThreatDetection[🔍 Threat Detection<br/>Automated Response]
+        SecurityEvents[🚨 Security Events<br/>Audit Logging]
+        Compliance[📋 Compliance<br/>GDPR, SOC 2]
+        Incident[🚑 Incident Response<br/>Auto-remediation]
+    end
+
+    subgraph "⚖️ Auto-scaling & Load Balancing"
+        HPA[📊 Horizontal Pod Autoscaler]
+        LoadBalancer[⚖️ Load Balancer]
+        ResourceMgmt[💾 Resource Management]
+    end
+
+    %% User Interactions
+    User --> WebUI
+    User --> API
+    WebUI --> SupaAuth
+    API --> SupaAuth
+
+    %% Authentication Flow
+    SupaAuth --> JWT
+    JWT --> RLS
+    RLS --> SupaDB
+
+    %% Database Connections
+    SupaDB --> AgentTable
+    SupaDB --> MetricsTable
+    SupaDB --> LogsTable
+    SupaDB --> SecretsTable
+
+    %% Agent Management Flow
+    JWT --> AgentService
+    AgentService --> CharacterConfig
+    AgentService --> PluginConfig
+    AgentService --> SecretMgmt
+    AgentService --> SupaDB
+
+    %% Deployment Pipeline
+    AgentService --> ContainerBuild
+    ContainerBuild --> SecurityScan
+    SecurityScan --> Registry
+    Registry --> K8sDeploy
+    SecretMgmt --> K8sDeploy
+
+    %% Platform Deployments
+    K8sDeploy --> Discord
+    K8sDeploy --> Telegram
+    K8sDeploy --> Twitter
+    K8sDeploy --> WebSocket
+
+    %% Monitoring Connections
+    K8sDeploy --> RealTimeMetrics
+    Discord --> LogStreaming
+    Telegram --> LogStreaming
+    Twitter --> LogStreaming
+    RealTimeMetrics --> SupaDB
+    LogStreaming --> SupaDB
+    RealTimeMetrics --> Prometheus
+    Prometheus --> Grafana
+    SupaDB --> SupaRealtime
+    SupaRealtime --> WebUI
+
+    %% Security & Compliance
+    SupaDB --> SecurityEvents
+    SecurityEvents --> ThreatDetection
+    ThreatDetection --> Incident
+    SecurityEvents --> Compliance
+
+    %% Auto-scaling
+    RealTimeMetrics --> HPA
+    HPA --> K8sDeploy
+    K8sDeploy --> LoadBalancer
+    LoadBalancer --> ResourceMgmt
+
+    %% Real-time Updates
+    SupaRealtime --> RealTimeMetrics
+    SupaRealtime --> LogStreaming
+    SupaRealtime --> SecurityEvents
+
+    %% Styling for better visual clarity
+    classDef userStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef authStyle fill:#e8f5e8,stroke:#4caf50,stroke-width:2px
+    classDef dbStyle fill:#fff3e0,stroke:#ff9800,stroke-width:2px
+    classDef agentStyle fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
+    classDef deployStyle fill:#e0f2f1,stroke:#009688,stroke-width:2px
+    classDef platformStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef monitorStyle fill:#fce4ec,stroke:#e91e63,stroke-width:2px
+    classDef securityStyle fill:#ffebee,stroke:#f44336,stroke-width:2px
+    classDef scalingStyle fill:#f1f8e9,stroke:#8bc34a,stroke-width:2px
+
+    class User,WebUI,API userStyle
+    class SupaAuth,JWT,RLS authStyle
+    class SupaDB,AgentTable,MetricsTable,LogsTable,SecretsTable dbStyle
+    class AgentService,CharacterConfig,PluginConfig,SecretMgmt agentStyle
+    class ContainerBuild,SecurityScan,Registry,K8sDeploy deployStyle
+    class Discord,Telegram,Twitter,WebSocket platformStyle
+    class RealTimeMetrics,LogStreaming,Prometheus,Grafana,SupaRealtime monitorStyle
+    class ThreatDetection,SecurityEvents,Compliance,Incident securityStyle
+    class HPA,LoadBalancer,ResourceMgmt scalingStyle
+```
+
+</div>
+
+<div align="center" style="margin: 20px 0;">
+<p style="font-size: 16px; color: #666; max-width: 800px; margin: 0 auto;">
+<strong>🔄 End-to-End System Flow:</strong> From user authentication through Supabase Auth → Agent creation and configuration → Secure deployment pipeline → Multi-platform integration → Real-time monitoring and auto-scaling → Security compliance and incident response
+</p>
+</div>
+
+---
+
 ## 🌟 What is Multi-Agent Infrastructure at Scale?
 
 The **Multi-Agent Infrastructure at Scale** is a robust infrastructure backend that automates the deployment and management of [Eliza-based AI agents](https://github.com/elizaos/eliza) through a streamlined interface with Docker and Kubernetes orchestration.
