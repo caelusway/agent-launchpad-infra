@@ -206,6 +206,8 @@ curl -X POST https://your-domain.com/api/agents \
 
 ### 📊 Agent Status & Management
 
+#### REST API - Standard Operations
+
 ```bash
 # Check agent status
 curl -X GET https://your-domain.com/api/agents/crypto-trading-bot \
@@ -229,6 +231,179 @@ curl -X PATCH https://your-domain.com/api/agents/crypto-trading-bot \
 # View agent logs
 curl -X GET https://your-domain.com/api/agents/crypto-trading-bot/logs \
   -H "X-API-Key: your-api-key"
+```
+
+#### WebSocket - Real-time Updates
+
+```javascript
+// Real-time agent status monitoring
+const statusSocket = new WebSocket('wss://your-domain.com/ws/agents/crypto-trading-bot/status');
+
+statusSocket.onopen = () => {
+  console.log('Connected to agent status stream');
+  // Authenticate WebSocket connection
+  statusSocket.send(JSON.stringify({
+    type: 'auth',
+    apiKey: 'your-api-key'
+  }));
+};
+
+statusSocket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  
+  switch(data.type) {
+    case 'status_update':
+      console.log('Agent Status:', data.payload);
+      // Update UI with real-time status
+      updateAgentStatus(data.payload);
+      break;
+      
+    case 'performance_metrics':
+      console.log('Performance:', data.payload);
+      // Update performance charts
+      updateMetricsChart(data.payload);
+      break;
+      
+    case 'scaling_event':
+      console.log('Scaling:', data.payload);
+      // Show scaling notifications
+      showScalingNotification(data.payload);
+      break;
+  }
+};
+
+// Real-time log streaming
+const logSocket = new WebSocket('wss://your-domain.com/ws/agents/crypto-trading-bot/logs');
+
+logSocket.onmessage = (event) => {
+  const logData = JSON.parse(event.data);
+  
+  // Stream logs to UI in real-time
+  appendLogToUI({
+    timestamp: logData.timestamp,
+    level: logData.level,
+    message: logData.message,
+    source: logData.source
+  });
+};
+
+// System-wide monitoring
+const monitorSocket = new WebSocket('wss://your-domain.com/ws/monitoring/dashboard');
+
+monitorSocket.onmessage = (event) => {
+  const monitoring = JSON.parse(event.data);
+  
+  switch(monitoring.type) {
+    case 'resource_usage':
+      updateResourceCharts(monitoring.payload);
+      break;
+      
+    case 'alert':
+      showRealTimeAlert(monitoring.payload);
+      break;
+      
+    case 'deployment_status':
+      updateDeploymentStatus(monitoring.payload);
+      break;
+  }
+};
+```
+
+#### React Component Example
+
+```jsx
+import React, { useState, useEffect } from 'react';
+
+const AgentMonitoringDashboard = ({ agentName, apiKey }) => {
+  const [agentStatus, setAgentStatus] = useState({});
+  const [metrics, setMetrics] = useState({});
+  const [logs, setLogs] = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    // WebSocket connection for real-time updates
+    const ws = new WebSocket(`wss://your-domain.com/ws/agents/${agentName}/status`);
+    
+    ws.onopen = () => {
+      setIsConnected(true);
+      ws.send(JSON.stringify({ type: 'auth', apiKey }));
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      switch(data.type) {
+        case 'status_update':
+          setAgentStatus(data.payload);
+          break;
+        case 'performance_metrics':
+          setMetrics(data.payload);
+          break;
+        case 'log_stream':
+          setLogs(prev => [...prev.slice(-99), data.payload]);
+          break;
+      }
+    };
+    
+    ws.onclose = () => setIsConnected(false);
+    
+    return () => ws.close();
+  }, [agentName, apiKey]);
+
+  return (
+    <div className="agent-dashboard">
+      <div className="status-indicator">
+        <span className={`status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
+          {isConnected ? '🟢 Live' : '🔴 Offline'}
+        </span>
+      </div>
+      
+      <div className="agent-info">
+        <h3>{agentName}</h3>
+        <p>Status: {agentStatus.status}</p>
+        <p>CPU: {metrics.cpu}%</p>
+        <p>Memory: {metrics.memory}MB</p>
+        <p>Replicas: {agentStatus.replicas}</p>
+      </div>
+      
+      <div className="log-stream">
+        <h4>Live Logs</h4>
+        <div className="log-container">
+          {logs.map((log, index) => (
+            <div key={index} className={`log-entry ${log.level}`}>
+              <span className="timestamp">{log.timestamp}</span>
+              <span className="message">{log.message}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AgentMonitoringDashboard;
+```
+
+#### WebSocket Events Available
+
+```javascript
+// Agent-specific events
+const agentEvents = {
+  'status_update': 'Agent status changes (running, stopped, error)',
+  'performance_metrics': 'CPU, Memory, Network usage in real-time',
+  'scaling_event': 'Auto-scaling up/down events',
+  'health_check': 'Health check results',
+  'log_stream': 'Real-time log streaming',
+  'error_alert': 'Critical errors and exceptions'
+};
+
+// System-wide events
+const systemEvents = {
+  'resource_usage': 'Cluster resource utilization',
+  'deployment_status': 'Deployment progress and status',
+  'alert': 'System-wide alerts and notifications',
+  'performance_summary': 'Aggregated performance metrics'
+};
 ```
 
 <div align="center">
