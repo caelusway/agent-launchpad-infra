@@ -19,7 +19,8 @@ description: "Infrastructure backend for automated AI agent deployment and manag
 
 ## 🔄 Complete System Flow
 
-<div style="width: 100%; max-width: none; overflow-x: auto;">
+<div style="position: relative;">
+<div style="width: 100%; max-width: none; overflow-x: auto;" id="system-flow-diagram">
 
 ```mermaid
 flowchart TB
@@ -175,11 +176,498 @@ flowchart TB
 
 </div>
 
+<!-- Zoom Button -->
+<div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+<button id="zoom-diagram-btn" style="
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+" onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
+🔍 Zoom to Full View
+</button>
+</div>
+
+</div>
+
 <div align="center" style="margin: 20px 0;">
 <p style="font-size: 16px; color: #666; max-width: 800px; margin: 0 auto;">
 <strong>🔄 End-to-End System Flow:</strong> From user authentication through Supabase Auth → Agent creation and configuration → Secure deployment pipeline → Multi-platform integration → Real-time monitoring and auto-scaling → Security compliance and incident response
 </p>
+<p style="font-size: 14px; color: #888; margin-top: 10px;">
+💡 <em>Click the "Zoom to Full View" button above to see the diagram in full detail</em>
+</p>
 </div>
+
+<!-- Modal for Full View -->
+<div id="diagram-modal" style="
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+  overflow: auto;
+">
+  <div style="
+    position: relative;
+    background-color: white;
+    margin: 2% auto;
+    padding: 0;
+    width: 95%;
+    max-width: 1400px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  ">
+    <!-- Modal Header -->
+    <div style="
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    ">
+      <h3 style="margin: 0; font-size: 20px;">🔄 Complete System Flow - Full View</h3>
+      <span id="close-modal" style="
+        font-size: 28px;
+        cursor: pointer;
+        color: white;
+        transition: color 0.3s ease;
+      " onmouseover="this.style.color='#ffc107'" onmouseout="this.style.color='white'">&times;</span>
+    </div>
+    
+    <!-- Modal Content -->
+    <div id="modal-content" style="
+      padding: 20px;
+      overflow: auto;
+      max-height: 80vh;
+    ">
+      <!-- Diagram will be inserted here -->
+    </div>
+    
+    <!-- Modal Footer -->
+    <div style="
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-radius: 0 0 10px 10px;
+      text-align: center;
+      border-top: 1px solid #e0e0e0;
+    ">
+      <p style="margin: 0; color: #666; font-size: 14px;">
+        <strong>Interactive Features:</strong> Scroll to zoom • Drag to pan • Click nodes for details
+      </p>
+      <div style="margin-top: 10px;">
+        <button id="reset-zoom" style="
+          background: #28a745;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          margin: 0 5px;
+        ">🔄 Reset View</button>
+        <button id="download-diagram" style="
+          background: #17a2b8;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          margin: 0 5px;
+        ">💾 Download PNG</button>
+        <button id="copy-link" style="
+          background: #6c757d;
+          color: white;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          margin: 0 5px;
+        ">🔗 Copy Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Get modal elements
+  const modal = document.getElementById('diagram-modal');
+  const btn = document.getElementById('zoom-diagram-btn');
+  const span = document.getElementById('close-modal');
+  const modalContent = document.getElementById('modal-content');
+  const resetZoomBtn = document.getElementById('reset-zoom');
+  const downloadBtn = document.getElementById('download-diagram');
+  const copyLinkBtn = document.getElementById('copy-link');
+
+  // Enhanced Mermaid diagram for modal (with better styling and larger size)
+  const fullDiagramCode = `
+flowchart TB
+    subgraph "👤 User Layer"
+        User[👤 User/Developer<br/>• Web Interface Access<br/>• API Integration<br/>• Authentication Required]
+        WebUI[🌐 Web Interface<br/>• React Dashboard<br/>• Real-time Updates<br/>• Mobile Responsive]
+        API[🔌 REST API<br/>• RESTful Endpoints<br/>• GraphQL Support<br/>• Rate Limited]
+    end
+
+    subgraph "🔐 Authentication & Security"
+        SupaAuth[🔑 Supabase Auth<br/>• OAuth Providers<br/>• Email/Password<br/>• Magic Links<br/>• MFA Support]
+        JWT[🎫 JWT Tokens<br/>• Auto-refresh<br/>• Secure Claims<br/>• Role-based<br/>• Expiration Management]
+        RLS[🛡️ Row-Level Security<br/>• Data Isolation<br/>• User-based Policies<br/>• Automatic Enforcement]
+    end
+
+    subgraph "📊 Database & Storage"
+        SupaDB[(🗄️ Supabase Database<br/>• PostgreSQL Engine<br/>• Real-time Subscriptions<br/>• Automatic Backups<br/>• Point-in-time Recovery)]
+        AgentTable[🤖 Agents Table<br/>• Configuration Storage<br/>• Status Tracking<br/>• Metadata Management]
+        MetricsTable[📈 Metrics Table<br/>• Performance Data<br/>• Time-series Storage<br/>• Analytics Ready]
+        LogsTable[📋 Logs Table<br/>• Structured Logging<br/>• Search Optimization<br/>• Retention Policies]
+        SecretsTable[🔐 Secrets Table<br/>• Encrypted Storage<br/>• Key Management<br/>• Access Control]
+    end
+
+    subgraph "🤖 Agent Management"
+        AgentService[⚙️ Agent Service<br/>• Lifecycle Management<br/>• Configuration Validation<br/>• Deployment Orchestration]
+        CharacterConfig[🎭 Character Configuration<br/>• Personality Definition<br/>• Bio & Instructions<br/>• Behavior Patterns]
+        PluginConfig[🔌 Plugin Configuration<br/>• Extension Management<br/>• Dependency Resolution<br/>• Version Control]
+        SecretMgmt[🔐 Secret Management<br/>• API Key Storage<br/>• Token Encryption<br/>• Secure Distribution]
+    end
+
+    subgraph "🏗️ Deployment Pipeline"
+        ContainerBuild[📦 Container Build<br/>• Eliza Framework<br/>• Plugin Integration<br/>• Multi-stage Build<br/>• Optimization]
+        SecurityScan[🛡️ Security Scan<br/>• Trivy Vulnerability Check<br/>• SAST Analysis<br/>• License Compliance<br/>• Policy Enforcement]
+        Registry[📋 Container Registry<br/>• Secure Image Storage<br/>• Vulnerability Database<br/>• Access Control<br/>• Artifact Management]
+        K8sDeploy[☸️ Kubernetes Deploy<br/>• Pod Management<br/>• Service Discovery<br/>• Secret Injection<br/>• Health Checks]
+    end
+
+    subgraph "🌐 Platform Integrations"
+        Discord[💬 Discord Bot<br/>• Real-time Chat<br/>• Slash Commands<br/>• Voice Integration<br/>• Community Management]
+        Telegram[📱 Telegram Bot<br/>• Inline Keyboards<br/>• File Sharing<br/>• Channel Support<br/>• Bot API v6.0]
+        Twitter[🐦 Twitter Bot<br/>• Tweet Automation<br/>• Engagement Tracking<br/>• Trend Analysis<br/>• Social Listening]
+        WebSocket[⚡ WebSocket<br/>• Real-time Updates<br/>• Bidirectional Comm<br/>• Event Streaming<br/>• Low Latency]
+    end
+
+    subgraph "📊 Monitoring & Analytics"
+        RealTimeMetrics[📈 Real-time Metrics<br/>• Performance Tracking<br/>• Health Monitoring<br/>• Custom Dashboards<br/>• Alert Generation]
+        LogStreaming[📋 Log Streaming<br/>• Centralized Logging<br/>• Log Aggregation<br/>• Search & Filter<br/>• Real-time Analysis]
+        Prometheus[📊 Prometheus<br/>• Metrics Collection<br/>• Time-series DB<br/>• Alert Manager<br/>• Service Discovery]
+        Grafana[📈 Grafana<br/>• Visualization<br/>• Custom Dashboards<br/>• Alert Dashboards<br/>• Multi-tenant]
+        SupaRealtime[⚡ Supabase Real-time<br/>• Live Database Changes<br/>• WebSocket Events<br/>• Presence Tracking<br/>• Broadcast Messages]
+    end
+
+    subgraph "🚨 Security & Compliance"
+        ThreatDetection[🔍 Threat Detection<br/>• Anomaly Detection<br/>• Pattern Recognition<br/>• ML-based Analysis<br/>• Risk Assessment]
+        SecurityEvents[🚨 Security Events<br/>• Audit Logging<br/>• Event Correlation<br/>• Incident Tracking<br/>• Compliance Reports]
+        Compliance[📋 Compliance<br/>• GDPR Ready<br/>• SOC 2 Compliant<br/>• Data Retention<br/>• Privacy Controls]
+        Incident[🚑 Incident Response<br/>• Auto-remediation<br/>• Escalation Policies<br/>• Recovery Procedures<br/>• Post-incident Analysis]
+    end
+
+    subgraph "⚖️ Auto-scaling & Load Balancing"
+        HPA[📊 Horizontal Pod Autoscaler<br/>• CPU-based Scaling<br/>• Memory-based Scaling<br/>• Custom Metrics<br/>• Predictive Scaling]
+        LoadBalancer[⚖️ Load Balancer<br/>• Traffic Distribution<br/>• Health Checks<br/>• SSL Termination<br/>• Failover Support]
+        ResourceMgmt[💾 Resource Management<br/>• Resource Quotas<br/>• Limit Ranges<br/>• Priority Classes<br/>• Node Affinity]
+    end
+
+    %% Enhanced User Interactions
+    User --> WebUI
+    User --> API
+    WebUI --> SupaAuth
+    API --> SupaAuth
+
+    %% Authentication Flow
+    SupaAuth --> JWT
+    JWT --> RLS
+    RLS --> SupaDB
+
+    %% Database Connections
+    SupaDB --> AgentTable
+    SupaDB --> MetricsTable
+    SupaDB --> LogsTable
+    SupaDB --> SecretsTable
+
+    %% Agent Management Flow
+    JWT --> AgentService
+    AgentService --> CharacterConfig
+    AgentService --> PluginConfig
+    AgentService --> SecretMgmt
+    AgentService --> SupaDB
+
+    %% Deployment Pipeline
+    AgentService --> ContainerBuild
+    ContainerBuild --> SecurityScan
+    SecurityScan --> Registry
+    Registry --> K8sDeploy
+    SecretMgmt --> K8sDeploy
+
+    %% Platform Deployments
+    K8sDeploy --> Discord
+    K8sDeploy --> Telegram
+    K8sDeploy --> Twitter
+    K8sDeploy --> WebSocket
+
+    %% Monitoring Connections
+    K8sDeploy --> RealTimeMetrics
+    Discord --> LogStreaming
+    Telegram --> LogStreaming
+    Twitter --> LogStreaming
+    WebSocket --> LogStreaming
+    RealTimeMetrics --> SupaDB
+    LogStreaming --> SupaDB
+    RealTimeMetrics --> Prometheus
+    Prometheus --> Grafana
+    SupaDB --> SupaRealtime
+    SupaRealtime --> WebUI
+
+    %% Security & Compliance
+    SupaDB --> SecurityEvents
+    SecurityEvents --> ThreatDetection
+    ThreatDetection --> Incident
+    SecurityEvents --> Compliance
+    LogStreaming --> SecurityEvents
+
+    %% Auto-scaling
+    RealTimeMetrics --> HPA
+    HPA --> K8sDeploy
+    K8sDeploy --> LoadBalancer
+    LoadBalancer --> ResourceMgmt
+
+    %% Real-time Updates
+    SupaRealtime --> RealTimeMetrics
+    SupaRealtime --> LogStreaming
+    SupaRealtime --> SecurityEvents
+
+    %% Cross-component integrations
+    SecurityScan --> SecurityEvents
+    Compliance --> SecurityEvents
+    Incident --> SecurityEvents
+    ResourceMgmt --> RealTimeMetrics
+
+    %% Enhanced Styling for better visual clarity
+    classDef userStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
+    classDef authStyle fill:#e8f5e8,stroke:#4caf50,stroke-width:3px,color:#000
+    classDef dbStyle fill:#fff3e0,stroke:#ff9800,stroke-width:3px,color:#000
+    classDef agentStyle fill:#f3e5f5,stroke:#9c27b0,stroke-width:3px,color:#000
+    classDef deployStyle fill:#e0f2f1,stroke:#009688,stroke-width:3px,color:#000
+    classDef platformStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:3px,color:#000
+    classDef monitorStyle fill:#fce4ec,stroke:#e91e63,stroke-width:3px,color:#000
+    classDef securityStyle fill:#ffebee,stroke:#f44336,stroke-width:3px,color:#000
+    classDef scalingStyle fill:#f1f8e9,stroke:#8bc34a,stroke-width:3px,color:#000
+
+    class User,WebUI,API userStyle
+    class SupaAuth,JWT,RLS authStyle
+    class SupaDB,AgentTable,MetricsTable,LogsTable,SecretsTable dbStyle
+    class AgentService,CharacterConfig,PluginConfig,SecretMgmt agentStyle
+    class ContainerBuild,SecurityScan,Registry,K8sDeploy deployStyle
+    class Discord,Telegram,Twitter,WebSocket platformStyle
+    class RealTimeMetrics,LogStreaming,Prometheus,Grafana,SupaRealtime monitorStyle
+    class ThreatDetection,SecurityEvents,Compliance,Incident securityStyle
+    class HPA,LoadBalancer,ResourceMgmt scalingStyle
+  `;
+
+  // When the user clicks the button, open the modal
+  btn.onclick = function() {
+    modalContent.innerHTML = '<div class="mermaid" style="width: 100%; min-height: 600px;">' + fullDiagramCode + '</div>';
+    modal.style.display = 'block';
+    
+    // Re-render mermaid in modal
+    if (typeof mermaid !== 'undefined') {
+      mermaid.init(undefined, modalContent.querySelector('.mermaid'));
+    }
+    
+    // Add zoom and pan functionality
+    setTimeout(addZoomPanFunctionality, 500);
+  }
+
+  // When the user clicks on <span> (x), close the modal
+  span.onclick = function() {
+    modal.style.display = 'none';
+  }
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(event) {
+    if (modal.style.display === 'block') {
+      if (event.key === 'Escape') {
+        modal.style.display = 'none';
+      }
+    }
+  });
+
+  // Add zoom and pan functionality
+  function addZoomPanFunctionality() {
+    const svgElement = modalContent.querySelector('svg');
+    if (!svgElement) return;
+
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    // Apply initial transform
+    function updateTransform() {
+      svgElement.style.transform = \`translate(\${translateX}px, \${translateY}px) scale(\${scale})\`;
+    }
+
+    // Zoom functionality
+    modalContent.addEventListener('wheel', function(event) {
+      event.preventDefault();
+      const rect = modalContent.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      const delta = event.deltaY > 0 ? 0.9 : 1.1;
+      const newScale = Math.min(Math.max(0.1, scale * delta), 5);
+
+      // Zoom towards mouse position
+      translateX = x - (x - translateX) * (newScale / scale);
+      translateY = y - (y - translateY) * (newScale / scale);
+      scale = newScale;
+
+      updateTransform();
+    });
+
+    // Pan functionality
+    modalContent.addEventListener('mousedown', function(event) {
+      isDragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+      modalContent.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', function(event) {
+      if (!isDragging) return;
+      
+      const deltaX = event.clientX - lastX;
+      const deltaY = event.clientY - lastY;
+      
+      translateX += deltaX;
+      translateY += deltaY;
+      
+      lastX = event.clientX;
+      lastY = event.clientY;
+      
+      updateTransform();
+    });
+
+    document.addEventListener('mouseup', function() {
+      isDragging = false;
+      modalContent.style.cursor = 'grab';
+    });
+
+    // Reset zoom functionality
+    resetZoomBtn.onclick = function() {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      updateTransform();
+    };
+
+    // Set initial cursor
+    modalContent.style.cursor = 'grab';
+  }
+
+  // Download functionality
+  downloadBtn.onclick = function() {
+    const svgElement = modalContent.querySelector('svg');
+    if (!svgElement) return;
+
+    // Create canvas and convert SVG to PNG
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+    const svgUrl = URL.createObjectURL(svgBlob);
+    
+    const img = new Image();
+    img.onload = function() {
+      canvas.width = img.width * 2; // Higher resolution
+      canvas.height = img.height * 2;
+      ctx.scale(2, 2);
+      ctx.drawImage(img, 0, 0);
+      
+      // Download the image
+      const link = document.createElement('a');
+      link.download = 'multi-agent-infrastructure-system-flow.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      URL.revokeObjectURL(svgUrl);
+    };
+    img.src = svgUrl;
+  };
+
+  // Copy link functionality
+  copyLinkBtn.onclick = function() {
+    const url = window.location.href + '#system-flow';
+    navigator.clipboard.writeText(url).then(function() {
+      const originalText = copyLinkBtn.innerHTML;
+      copyLinkBtn.innerHTML = '✅ Copied!';
+      copyLinkBtn.style.background = '#28a745';
+      setTimeout(function() {
+        copyLinkBtn.innerHTML = originalText;
+        copyLinkBtn.style.background = '#6c757d';
+      }, 2000);
+    });
+  };
+
+  // Add CSS for modal animations
+  const style = document.createElement('style');
+  style.textContent = \`
+    #diagram-modal {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    #diagram-modal .mermaid svg {
+      transition: transform 0.1s ease-out;
+      cursor: grab;
+    }
+    
+    #diagram-modal .mermaid svg:active {
+      cursor: grabbing;
+    }
+    
+    #zoom-diagram-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    #close-modal:hover {
+      transform: scale(1.1);
+    }
+    
+    @media (max-width: 768px) {
+      #diagram-modal > div {
+        width: 98%;
+        margin: 1% auto;
+      }
+      
+      #modal-content {
+        padding: 10px;
+        max-height: 70vh;
+      }
+    }
+  \`;
+  document.head.appendChild(style);
+})();
+</script>
 
 ---
 
