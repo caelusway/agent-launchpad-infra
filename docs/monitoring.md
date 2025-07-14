@@ -1,14 +1,14 @@
 ---
 layout: default
 title: "Monitoring & Observability"
-description: "Comprehensive monitoring, metrics, and alerting configuration"
+description: "Comprehensive monitoring, metrics, and alerting configuration with Portainer integration"
 ---
 
 # 📊 Monitoring & Observability
 
 ## 🎯 Monitoring Overview
 
-Comprehensive monitoring is essential for running AI agents in production. This guide covers setting up observability, metrics collection, alerting, and performance monitoring for the Multi-Agent Infrastructure at Scale.
+Comprehensive monitoring is essential for running AI agents in production. This guide covers setting up observability, metrics collection, alerting, and performance monitoring for the Multi-Agent Infrastructure at Scale. Container monitoring and metrics are integrated through our unified API layer, providing a single interface for all observability needs.
 
 ## 🏗️ Monitoring Architecture
 
@@ -20,6 +20,8 @@ graph TB
         K8s[Kubernetes]
         DB[(Database)]
         Redis[(Redis)]
+        SupaDB[(Supabase Database)]
+        ContainerMgmt[Container Management Service]
     end
     
     subgraph "Collection Layer"
@@ -27,18 +29,24 @@ graph TB
         NodeExp[Node Exporter]
         CAdvisor[cAdvisor]
         Jaeger[Jaeger]
+        MetricsCollector[Metrics Collector]
+        SupabaseMetrics[Supabase Metrics]
     end
     
     subgraph "Storage Layer"
         PromDB[(Prometheus DB)]
         JaegerDB[(Jaeger DB)]
         LogStore[(Log Storage)]
+
+        SupabaseStorage[(Supabase Storage)]
     end
     
     subgraph "Visualization"
         Grafana[Grafana]
         AlertMgr[Alert Manager]
         JaegerUI[Jaeger UI]
+        UnifiedDashboard[Unified Dashboard]
+        SupabaseUI[Supabase Dashboard]
     end
     
     subgraph "Notification"
@@ -46,6 +54,7 @@ graph TB
         Email[Email]
         PagerDuty[PagerDuty]
         Discord[Discord]
+        SupabaseRT[Supabase Real-time]
     end
     
     API --> Prometheus
@@ -53,34 +62,50 @@ graph TB
     K8s --> Prometheus
     DB --> Prometheus
     Redis --> Prometheus
+    SupaDB --> SupabaseMetrics
+    ContainerMgmt --> MetricsCollector
     
     NodeExp --> Prometheus
     CAdvisor --> Prometheus
+    MetricsCollector --> Prometheus
+    SupabaseMetrics --> Prometheus
     
     API --> Jaeger
     Agents --> Jaeger
     
     Prometheus --> PromDB
     Jaeger --> JaegerDB
+    ContainerMgmt --> LogStore
+    SupabaseMetrics --> SupabaseStorage
     
     PromDB --> Grafana
     PromDB --> AlertMgr
     JaegerDB --> JaegerUI
+    LogStore --> UnifiedDashboard
+    SupabaseStorage --> SupabaseUI
     
     AlertMgr --> Slack
     AlertMgr --> Email
     AlertMgr --> PagerDuty
     AlertMgr --> Discord
+    SupabaseMetrics --> SupabaseRT
+    
+    %% Cross-integration
+    MetricsCollector --> Grafana
+    SupabaseMetrics --> Grafana
+    AlertMgr --> SupabaseRT
     
     style Prometheus fill:#ff9800
     style Grafana fill:#e91e63
     style AlertMgr fill:#f44336
     style Jaeger fill:#9c27b0
+    style PortainerAgent fill:#00bcd4
+    style SupabaseMetrics fill:#4caf50
 ```
 
-## 📈 Metrics Collection
+## 📈 Enhanced Metrics Collection
 
-### Prometheus Setup
+### Prometheus with Portainer Integration
 
 ```yaml
 # k8s/monitoring/prometheus-deployment.yaml
@@ -99,55 +124,33 @@ spec:
       labels:
         app: prometheus
     spec:
-      serviceAccountName: prometheus
       containers:
       - name: prometheus
-        image: prom/prometheus:v2.40.0
-        args:
-          - '--config.file=/etc/prometheus/prometheus.yml'
-          - '--storage.tsdb.path=/prometheus/'
-          - '--web.console.libraries=/etc/prometheus/console_libraries'
-          - '--web.console.templates=/etc/prometheus/consoles'
-          - '--storage.tsdb.retention.time=15d'
-          - '--web.enable-lifecycle'
-          - '--web.enable-admin-api'
+        image: prom/prometheus:latest
         ports:
         - containerPort: 9090
-          name: prometheus
-        resources:
-          requests:
-            memory: "2Gi"
-            cpu: "1000m"
-          limits:
-            memory: "4Gi"
-            cpu: "2000m"
         volumeMounts:
         - name: prometheus-config
           mountPath: /etc/prometheus
         - name: prometheus-storage
           mountPath: /prometheus
-        livenessProbe:
-          httpGet:
-            path: /-/healthy
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 15
-        readinessProbe:
-          httpGet:
-            path: /-/ready
-            port: 9090
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--web.console.libraries=/etc/prometheus/console_libraries'
+          - '--web.console.templates=/etc/prometheus/consoles'
+          - '--storage.tsdb.retention.time=200h'
+          - '--web.enable-lifecycle'
       volumes:
       - name: prometheus-config
         configMap:
           name: prometheus-config
       - name: prometheus-storage
         persistentVolumeClaim:
-          claimName: prometheus-storage
+          claimName: prometheus-pvc
 ```
 
-### Prometheus Configuration
+### Enhanced Prometheus Configuration
 
 ```yaml
 # k8s/monitoring/prometheus-config.yaml
@@ -161,9 +164,6 @@ data:
     global:
       scrape_interval: 15s
       evaluation_interval: 15s
-      external_labels:
-        cluster: 'agent-launchpad'
-        environment: 'production'
     
     rule_files:
       - "/etc/prometheus/rules/*.yml"
@@ -175,17 +175,11 @@ data:
               - alertmanager:9093
     
     scrape_configs:
-      # API Server Metrics
-      - job_name: 'api-servers'
+      # Existing configurations
+      - job_name: 'kubernetes-pods'
         kubernetes_sd_configs:
           - role: pod
-            namespaces:
-              names:
-                - production
         relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            action: keep
-            regex: api
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
             regex: true
@@ -198,11 +192,14 @@ data:
             regex: ([^:]+)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
-        scrape_interval: 10s
-        metrics_path: '/metrics'
       
-      # Agent Metrics
-      - job_name: 'agent-pods'
+      - job_name: 'api-servers'
+        static_configs:
+          - targets: ['api-service:80']
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+      
+      - job_name: 'eliza-agents'
         kubernetes_sd_configs:
           - role: pod
             namespaces:
@@ -212,199 +209,372 @@ data:
           - source_labels: [__meta_kubernetes_pod_label_app]
             action: keep
             regex: eliza-agent
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: agent_name
           - source_labels: [__meta_kubernetes_pod_label_agent_id]
             target_label: agent_id
-          - source_labels: [__meta_kubernetes_pod_name]
-            target_label: pod_name
-        scrape_interval: 30s
-        metrics_path: '/metrics'
       
-      # Kubernetes Metrics
-      - job_name: 'kubernetes-nodes'
-        kubernetes_sd_configs:
-          - role: node
-        relabel_configs:
-          - action: labelmap
-            regex: __meta_kubernetes_node_label_(.+)
-        scrape_interval: 30s
-        metrics_path: '/metrics'
-      
-      # Database Metrics
-      - job_name: 'postgres-exporter'
+      # NEW: Portainer integration
+      - job_name: 'portainer-api'
         static_configs:
-          - targets: ['postgres-exporter:9187']
+          - targets: ['portainer.portainer.svc.cluster.local:9443']
+        metrics_path: '/api/system/status'
+        scheme: https
+        tls_config:
+          insecure_skip_verify: true
+        bearer_token_file: /var/run/secrets/portainer/token
         scrape_interval: 30s
       
-      # Redis Metrics
-      - job_name: 'redis-exporter'
+      - job_name: 'portainer-agent'
         static_configs:
-          - targets: ['redis-exporter:9121']
-        scrape_interval: 30s
+          - targets: ['portainer-agent.portainer.svc.cluster.local:9001']
+        metrics_path: '/metrics'
+        scrape_interval: 15s
       
-      # Node Exporter
-      - job_name: 'node-exporter'
+      - job_name: 'docker-containers'
         kubernetes_sd_configs:
           - role: pod
         relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_label_app]
+          - source_labels: [__meta_kubernetes_pod_annotation_portainer_io_scrape]
             action: keep
-            regex: node-exporter
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_portainer_io_stack]
+            target_label: portainer_stack
+          - source_labels: [__meta_kubernetes_pod_annotation_portainer_io_service]
+            target_label: portainer_service
+      
+      # NEW: Supabase integration
+      - job_name: 'supabase-metrics'
+        static_configs:
+          - targets: ['supabase-metrics.default.svc.cluster.local:3000']
+        metrics_path: '/metrics'
         scrape_interval: 30s
+        bearer_token_file: /var/run/secrets/supabase/service_role_key
+      
+      - job_name: 'supabase-realtime'
+        static_configs:
+          - targets: ['supabase-realtime.default.svc.cluster.local:4000']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+      
+      # Container-level metrics from Portainer
+      - job_name: 'portainer-container-metrics'
+        http_sd_configs:
+          - url: 'http://portainer-metrics-discovery:8080/discovery'
+        scrape_interval: 30s
+        metrics_path: '/metrics'
+        relabel_configs:
+          - source_labels: [__meta_portainer_stack_name]
+            target_label: stack_name
+          - source_labels: [__meta_portainer_service_name]
+            target_label: service_name
+          - source_labels: [__meta_portainer_container_id]
+            target_label: container_id
 ```
 
-### Application Metrics
+### Portainer Metrics Discovery Service
 
 ```typescript
-// src/monitoring/metrics.ts
+// portainer-metrics-discovery/src/app.ts
+import express from 'express';
+import axios from 'axios';
+import { createClient } from '@supabase/supabase-js';
+
+const app = express();
+const port = 8080;
+
+interface PortainerTarget {
+  targets: string[];
+  labels: {
+    __meta_portainer_stack_name: string;
+    __meta_portainer_service_name: string;
+    __meta_portainer_container_id: string;
+    __meta_portainer_endpoint_id: string;
+  };
+}
+
+class PortainerMetricsDiscovery {
+  private portainerUrl: string;
+  private portainerToken: string;
+  private supabase: any;
+
+  constructor() {
+    this.portainerUrl = process.env.PORTAINER_URL || 'http://portainer:9443';
+    this.portainerToken = process.env.PORTAINER_TOKEN || '';
+    this.supabase = createClient(
+      process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
+  }
+
+  async getPortainerTargets(): Promise<PortainerTarget[]> {
+    try {
+      const response = await axios.get(`${this.portainerUrl}/api/endpoints/1/docker/containers/json`, {
+        headers: {
+          'Authorization': `Bearer ${this.portainerToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const containers = response.data;
+      const targets: PortainerTarget[] = [];
+
+      for (const container of containers) {
+        // Only include containers with metrics enabled
+        if (container.Labels && container.Labels['prometheus.io/scrape'] === 'true') {
+          const port = container.Labels['prometheus.io/port'] || '9090';
+          const path = container.Labels['prometheus.io/path'] || '/metrics';
+          
+          // Get container network info
+          const networkMode = container.HostConfig?.NetworkMode || 'bridge';
+          const containerIP = this.getContainerIP(container);
+          
+          if (containerIP) {
+            targets.push({
+              targets: [`${containerIP}:${port}`],
+              labels: {
+                __meta_portainer_stack_name: container.Labels['com.docker.stack.namespace'] || 'unknown',
+                __meta_portainer_service_name: container.Labels['com.docker.swarm.service.name'] || container.Names[0],
+                __meta_portainer_container_id: container.Id,
+                __meta_portainer_endpoint_id: '1'
+              }
+            });
+          }
+        }
+      }
+
+      // Store targets in Supabase for persistence
+      await this.storeTargetsInSupabase(targets);
+
+      return targets;
+    } catch (error) {
+      console.error('Error fetching Portainer targets:', error);
+      return [];
+    }
+  }
+
+  private getContainerIP(container: any): string | null {
+    if (container.NetworkSettings?.Networks) {
+      const networks = Object.values(container.NetworkSettings.Networks);
+      for (const network of networks as any[]) {
+        if (network.IPAddress) {
+          return network.IPAddress;
+        }
+      }
+    }
+    return null;
+  }
+
+  private async storeTargetsInSupabase(targets: PortainerTarget[]) {
+    try {
+      const { error } = await this.supabase
+        .from('prometheus_targets')
+        .upsert(
+          targets.map(target => ({
+            target_url: target.targets[0],
+            stack_name: target.labels.__meta_portainer_stack_name,
+            service_name: target.labels.__meta_portainer_service_name,
+            container_id: target.labels.__meta_portainer_container_id,
+            endpoint_id: target.labels.__meta_portainer_endpoint_id,
+            discovered_at: new Date().toISOString()
+          })),
+          { onConflict: 'target_url' }
+        );
+
+      if (error) {
+        console.error('Error storing targets in Supabase:', error);
+      }
+    } catch (error) {
+      console.error('Supabase storage error:', error);
+    }
+  }
+}
+
+const discovery = new PortainerMetricsDiscovery();
+
+app.get('/discovery', async (req, res) => {
+  const targets = await discovery.getPortainerTargets();
+  res.json(targets);
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+app.listen(port, () => {
+  console.log(`Portainer metrics discovery service running on port ${port}`);
+});
+```
+
+### Supabase Metrics Integration
+
+```typescript
+// supabase-metrics/src/metrics-collector.ts
+import { createClient } from '@supabase/supabase-js';
 import { register, Counter, Histogram, Gauge } from 'prom-client';
 
-// HTTP Request Metrics
-export const httpRequestsTotal = new Counter({
-  name: 'http_requests_total',
-  help: 'Total HTTP requests',
-  labelNames: ['method', 'route', 'status_code'],
-  registers: [register]
-});
+export class SupabaseMetricsCollector {
+  private supabase: any;
+  private dbConnectionsGauge: Gauge<string>;
+  private realtimeConnectionsGauge: Gauge<string>;
+  private authRequestsCounter: Counter<string>;
+  private queryDurationHistogram: Histogram<string>;
 
-export const httpRequestDuration = new Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'HTTP request duration in seconds',
-  labelNames: ['method', 'route', 'status_code'],
-  buckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10],
-  registers: [register]
-});
+  constructor() {
+    this.supabase = createClient(
+      process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
 
-// Agent Deployment Metrics
-export const agentDeploymentsTotal = new Counter({
-  name: 'agent_deployments_total',
-  help: 'Total agent deployments',
-  labelNames: ['status', 'agent_type'],
-  registers: [register]
-});
+    this.initializeMetrics();
+    this.startCollection();
+  }
 
-export const agentDeploymentDuration = new Histogram({
-  name: 'agent_deployment_duration_seconds',
-  help: 'Agent deployment duration in seconds',
-  labelNames: ['agent_type', 'status'],
-  buckets: [30, 60, 120, 300, 600, 1200],
-  registers: [register]
-});
-
-// Active Agent Metrics
-export const activeAgents = new Gauge({
-  name: 'active_agents_total',
-  help: 'Number of active agents',
-  labelNames: ['agent_type', 'status'],
-  registers: [register]
-});
-
-// Database Metrics
-export const databaseConnections = new Gauge({
-  name: 'database_connections_active',
-  help: 'Active database connections',
-  registers: [register]
-});
-
-export const databaseQueryDuration = new Histogram({
-  name: 'database_query_duration_seconds',
-  help: 'Database query duration in seconds',
-  labelNames: ['operation', 'table'],
-  buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
-  registers: [register]
-});
-
-// Security Metrics
-export const securityEvents = new Counter({
-  name: 'security_events_total',
-  help: 'Total security events',
-  labelNames: ['event_type', 'severity'],
-  registers: [register]
-});
-
-export const rateLimitExceeded = new Counter({
-  name: 'rate_limit_exceeded_total',
-  help: 'Rate limit exceeded events',
-  labelNames: ['api_key_id', 'endpoint'],
-  registers: [register]
-});
-
-// Container Security Metrics
-export const containerScans = new Counter({
-  name: 'container_scans_total',
-  help: 'Container security scans performed',
-  labelNames: ['status', 'severity'],
-  registers: [register]
-});
-
-export const vulnerabilities = new Gauge({
-  name: 'container_vulnerabilities_total',
-  help: 'Number of vulnerabilities found',
-  labelNames: ['severity', 'agent_id'],
-  registers: [register]
-});
-```
-
-### Metrics Middleware
-
-```typescript
-// src/middleware/metrics.ts
-import { Request, Response, NextFunction } from 'express';
-import { httpRequestsTotal, httpRequestDuration } from '../monitoring/metrics';
-
-export function metricsMiddleware(req: Request, res: Response, next: NextFunction) {
-  const start = Date.now();
-  
-  res.on('finish', () => {
-    const duration = (Date.now() - start) / 1000;
-    const route = req.route?.path || req.url;
-    const method = req.method;
-    const statusCode = res.statusCode.toString();
-    
-    // Increment request counter
-    httpRequestsTotal.inc({
-      method,
-      route,
-      status_code: statusCode
+  private initializeMetrics() {
+    this.dbConnectionsGauge = new Gauge({
+      name: 'supabase_db_connections_total',
+      help: 'Total number of database connections',
+      labelNames: ['database', 'state']
     });
-    
-    // Record request duration
-    httpRequestDuration.observe({
-      method,
-      route,
-      status_code: statusCode
-    }, duration);
-  });
-  
-  next();
+
+    this.realtimeConnectionsGauge = new Gauge({
+      name: 'supabase_realtime_connections_total',
+      help: 'Total number of real-time connections',
+      labelNames: ['channel']
+    });
+
+    this.authRequestsCounter = new Counter({
+      name: 'supabase_auth_requests_total',
+      help: 'Total number of authentication requests',
+      labelNames: ['method', 'status']
+    });
+
+    this.queryDurationHistogram = new Histogram({
+      name: 'supabase_query_duration_seconds',
+      help: 'Duration of Supabase queries',
+      labelNames: ['table', 'operation'],
+      buckets: [0.1, 0.5, 1, 2, 5, 10]
+    });
+  }
+
+  private async startCollection() {
+    setInterval(async () => {
+      await this.collectDatabaseMetrics();
+      await this.collectRealtimeMetrics();
+      await this.collectAuthMetrics();
+    }, 30000); // Collect every 30 seconds
+  }
+
+  private async collectDatabaseMetrics() {
+    try {
+      // Get database connection stats
+      const { data: connections } = await this.supabase
+        .from('pg_stat_activity')
+        .select('state, count(*)')
+        .group('state');
+
+      if (connections) {
+        connections.forEach((conn: any) => {
+          this.dbConnectionsGauge.set(
+            { database: 'main', state: conn.state },
+            parseInt(conn.count)
+          );
+        });
+      }
+
+      // Get table-specific metrics
+      const { data: tableStats } = await this.supabase
+        .from('pg_stat_user_tables')
+        .select('relname, n_tup_ins, n_tup_upd, n_tup_del, seq_scan, seq_tup_read');
+
+      if (tableStats) {
+        tableStats.forEach((table: any) => {
+          // Track query performance by table
+          this.queryDurationHistogram.observe(
+            { table: table.relname, operation: 'select' },
+            table.seq_tup_read / 1000 // Rough estimate
+          );
+        });
+      }
+    } catch (error) {
+      console.error('Error collecting database metrics:', error);
+    }
+  }
+
+  private async collectRealtimeMetrics() {
+    try {
+      // Get real-time connection stats
+      const { data: realtimeStats } = await this.supabase
+        .from('realtime_channels')
+        .select('channel, connection_count');
+
+      if (realtimeStats) {
+        realtimeStats.forEach((channel: any) => {
+          this.realtimeConnectionsGauge.set(
+            { channel: channel.channel },
+            channel.connection_count
+          );
+        });
+      }
+    } catch (error) {
+      console.error('Error collecting real-time metrics:', error);
+    }
+  }
+
+  private async collectAuthMetrics() {
+    try {
+      // Get authentication stats from the last hour
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      
+      const { data: authStats } = await this.supabase
+        .from('auth_audit_log_entries')
+        .select('event_type, count(*)')
+        .gte('created_at', oneHourAgo)
+        .group('event_type');
+
+      if (authStats) {
+        authStats.forEach((stat: any) => {
+          this.authRequestsCounter.inc(
+            { method: stat.event_type, status: 'success' },
+            parseInt(stat.count)
+          );
+        });
+      }
+    } catch (error) {
+      console.error('Error collecting auth metrics:', error);
+    }
+  }
+
+  getMetrics() {
+    return register.metrics();
+  }
 }
 ```
 
-## 📊 Grafana Dashboards
+## 📊 Enhanced Grafana Dashboards
 
-### System Overview Dashboard
+### Unified Infrastructure Dashboard
 
 ```json
 {
   "dashboard": {
-    "id": null,
-    "title": "Multi-Agent Infrastructure at Scale - System Overview",
-    "tags": ["agent-launchpad", "overview"],
-    "timezone": "browser",
+    "title": "Multi-Agent Infrastructure - Unified Overview",
     "panels": [
       {
-        "id": 1,
-        "title": "System Health",
+        "title": "System Health Overview",
         "type": "stat",
         "targets": [
           {
             "expr": "up{job=\"api-servers\"}",
-            "legendFormat": "API Servers",
-            "refId": "A"
+            "legendFormat": "API Servers"
           },
           {
-            "expr": "up{job=\"agent-pods\"}",
-            "legendFormat": "Agent Pods",
-            "refId": "B"
+            "expr": "up{job=\"portainer-api\"}",
+            "legendFormat": "Portainer"
+          },
+          {
+            "expr": "up{job=\"supabase-metrics\"}",
+            "legendFormat": "Supabase"
           }
         ],
         "fieldConfig": {
@@ -419,147 +589,102 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
               ]
             }
           }
-        },
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+        }
       },
       {
-        "id": 2,
+        "title": "Container Status (Portainer)",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "count by (status) (container_status{job=\"portainer-container-metrics\"})",
+            "legendFormat": "{{status}}"
+          }
+        ]
+      },
+      {
+        "title": "Agent Performance Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{job=\"portainer-container-metrics\", container_label_app=\"eliza-agent\"}[5m]) * 100",
+            "legendFormat": "CPU Usage - {{container_label_agent_name}}"
+          },
+          {
+            "expr": "container_memory_usage_bytes{job=\"portainer-container-metrics\", container_label_app=\"eliza-agent\"} / 1024 / 1024",
+            "legendFormat": "Memory Usage (MB) - {{container_label_agent_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Supabase Database Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "supabase_db_connections_total",
+            "legendFormat": "{{state}} connections"
+          }
+        ]
+      },
+      {
+        "title": "Real-time Subscriptions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "supabase_realtime_connections_total",
+            "legendFormat": "{{channel}}"
+          }
+        ]
+      },
+      {
+        "title": "Portainer Stack Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "portainer_stack_status",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "__name__": true,
+                "job": true,
+                "instance": true
+              },
+              "renameByName": {
+                "stack_name": "Stack Name",
+                "status": "Status",
+                "services": "Services",
+                "containers": "Containers"
+              }
+            }
+          }
+        ]
+      },
+      {
         "title": "API Request Rate",
         "type": "graph",
         "targets": [
           {
             "expr": "rate(http_requests_total[5m])",
-            "legendFormat": "{{method}} {{status_code}}",
-            "refId": "A"
+            "legendFormat": "{{method}} {{status}}"
           }
-        ],
-        "yAxes": [
-          {
-            "label": "Requests/sec",
-            "min": 0
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+        ]
       },
       {
-        "id": 3,
-        "title": "Agent Deployment Success Rate",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "rate(agent_deployments_total{status=\"success\"}[5m]) / rate(agent_deployments_total[5m]) * 100",
-            "legendFormat": "Success Rate",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percent",
-            "min": 0,
-            "max": 100,
-            "thresholds": {
-              "steps": [
-                {"color": "red", "value": 0},
-                {"color": "yellow", "value": 80},
-                {"color": "green", "value": 95}
-              ]
-            }
-          }
-        },
-        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8}
-      },
-      {
-        "id": 4,
-        "title": "Active Agents",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "sum(active_agents_total)",
-            "legendFormat": "Total Active",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "continuous-GrYlRd"},
-            "min": 0
-          }
-        },
-        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 8}
-      },
-      {
-        "id": 5,
-        "title": "Resource Usage",
+        "title": "Database Query Performance",
         "type": "graph",
         "targets": [
           {
-            "expr": "rate(container_cpu_usage_seconds_total{pod=~\"api-.*\"}[5m]) * 100",
-            "legendFormat": "CPU Usage %",
-            "refId": "A"
-          },
-          {
-            "expr": "container_memory_usage_bytes{pod=~\"api-.*\"} / container_spec_memory_limit_bytes * 100",
-            "legendFormat": "Memory Usage %",
-            "refId": "B"
-          }
-        ],
-        "yAxes": [
-          {
-            "label": "Percentage",
-            "min": 0,
-            "max": 100
-          }
-        ],
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
-      }
-    ],
-    "time": {
-      "from": "now-1h",
-      "to": "now"
-    },
-    "refresh": "30s"
-  }
-}
-```
-
-### Agent Performance Dashboard
-
-```json
-{
-  "dashboard": {
-    "title": "AI Agent Performance",
-    "panels": [
-      {
-        "title": "Agent Response Time",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(agent_response_duration_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.95, rate(supabase_query_duration_seconds_bucket[5m]))",
             "legendFormat": "95th percentile"
           },
           {
-            "expr": "histogram_quantile(0.50, rate(agent_response_duration_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.50, rate(supabase_query_duration_seconds_bucket[5m]))",
             "legendFormat": "50th percentile"
-          }
-        ]
-      },
-      {
-        "title": "Messages Processed",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(agent_messages_processed_total[5m])",
-            "legendFormat": "{{agent_id}}"
-          }
-        ]
-      },
-      {
-        "title": "Error Rate",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(agent_errors_total[5m]) / rate(agent_messages_processed_total[5m]) * 100",
-            "legendFormat": "Error Rate %"
           }
         ]
       }
@@ -568,9 +693,98 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
 }
 ```
 
-## 🚨 Alerting Rules
+### Portainer-Specific Dashboard
 
-### Prometheus Alert Rules
+```json
+{
+  "dashboard": {
+    "title": "Portainer Container Management",
+    "panels": [
+      {
+        "title": "Container Health Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(container_status{job=\"portainer-container-metrics\", status=\"healthy\"})",
+            "legendFormat": "Healthy"
+          },
+          {
+            "expr": "count(container_status{job=\"portainer-container-metrics\", status=\"unhealthy\"})",
+            "legendFormat": "Unhealthy"
+          }
+        ]
+      },
+      {
+        "title": "Stack Deployment Status",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "portainer_stack_info",
+            "format": "table",
+            "instant": true
+          }
+        ]
+      },
+      {
+        "title": "Container Resource Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{job=\"portainer-container-metrics\"}[5m]) * 100",
+            "legendFormat": "CPU - {{container_name}}"
+          },
+          {
+            "expr": "container_memory_usage_bytes{job=\"portainer-container-metrics\"} / 1024 / 1024",
+            "legendFormat": "Memory (MB) - {{container_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Network I/O",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(container_network_receive_bytes_total{job=\"portainer-container-metrics\"}[5m])",
+            "legendFormat": "RX - {{container_name}}"
+          },
+          {
+            "expr": "rate(container_network_transmit_bytes_total{job=\"portainer-container-metrics\"}[5m])",
+            "legendFormat": "TX - {{container_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Container Restart Count",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "container_restart_count{job=\"portainer-container-metrics\"}",
+            "legendFormat": "{{container_name}}"
+          }
+        ]
+      },
+      {
+        "title": "Stack Service Replicas",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "portainer_service_replicas_running",
+            "legendFormat": "Running - {{service_name}}"
+          },
+          {
+            "expr": "portainer_service_replicas_desired",
+            "legendFormat": "Desired - {{service_name}}"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## 🚨 Enhanced Alert Rules
+
+### Prometheus Alert Rules with Portainer Integration
 
 ```yaml
 # k8s/monitoring/alert-rules.yaml
@@ -580,124 +794,115 @@ metadata:
   name: prometheus-alert-rules
   namespace: monitoring
 data:
-  alert-rules.yml: |
+  alerts.yml: |
     groups:
-    - name: system-alerts
-      rules:
-      - alert: APIServerDown
-        expr: up{job="api-servers"} == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "API Server is down"
-          description: "API Server {{ $labels.instance }} has been down for more than 1 minute"
-      
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
-      
-      - alert: HighResponseTime
-        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High response time"
-          description: "95th percentile response time is {{ $value }}s"
-      
-      - alert: DatabaseConnectionHigh
-        expr: database_connections_active > 80
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High database connections"
-          description: "Database connections are at {{ $value }}"
-      
-      - alert: HighCPUUsage
-        expr: rate(container_cpu_usage_seconds_total[5m]) * 100 > 80
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High CPU usage"
-          description: "CPU usage is {{ $value }}% for {{ $labels.pod }}"
-      
-      - alert: HighMemoryUsage
-        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes * 100 > 85
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High memory usage"
-          description: "Memory usage is {{ $value }}% for {{ $labels.pod }}"
-    
-    - name: agent-alerts
-      rules:
-      - alert: AgentDeploymentFailed
-        expr: increase(agent_deployments_total{status="failed"}[5m]) > 0
-        for: 1m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Agent deployment failed"
-          description: "{{ $value }} agent deployments have failed in the last 5 minutes"
-      
-      - alert: AgentNotResponding
-        expr: up{job="agent-pods"} == 0
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Agent not responding"
-          description: "Agent {{ $labels.agent_id }} is not responding"
-      
-      - alert: LowAgentDeploymentSuccessRate
-        expr: rate(agent_deployments_total{status="success"}[10m]) / rate(agent_deployments_total[10m]) < 0.9
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Low agent deployment success rate"
-          description: "Agent deployment success rate is {{ $value | humanizePercentage }}"
-    
-    - name: security-alerts
-      rules:
-      - alert: CriticalVulnerabilityDetected
-        expr: container_vulnerabilities_total{severity="critical"} > 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Critical vulnerability detected"
-          description: "{{ $value }} critical vulnerabilities found in {{ $labels.agent_id }}"
-      
-      - alert: HighRateLimitExceeded
-        expr: rate(rate_limit_exceeded_total[5m]) > 10
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High rate limit exceeded"
-          description: "Rate limit exceeded {{ $value }} times per second"
-      
-      - alert: SuspiciousSecurityActivity
-        expr: increase(security_events_total{severity="high"}[10m]) > 5
-        for: 1m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Suspicious security activity"
-          description: "{{ $value }} high-severity security events in the last 10 minutes"
+      - name: infrastructure.rules
+        rules:
+          # Existing rules...
+          - alert: HighCPUUsage
+            expr: (rate(container_cpu_usage_seconds_total[5m]) * 100) > 80
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage detected"
+              description: "Container {{ $labels.container_name }} has high CPU usage: {{ $value }}%"
+          
+          - alert: HighMemoryUsage
+            expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes * 100) > 90
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High memory usage detected"
+              description: "Container {{ $labels.container_name }} has high memory usage: {{ $value }}%"
+          
+          # NEW: Portainer-specific alerts
+          - alert: PortainerStackDown
+            expr: portainer_stack_status == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Portainer stack is down"
+              description: "Stack {{ $labels.stack_name }} is not running"
+          
+          - alert: ContainerRestartLoop
+            expr: increase(container_restart_count[10m]) > 3
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Container restart loop detected"
+              description: "Container {{ $labels.container_name }} has restarted {{ $value }} times in the last 10 minutes"
+          
+          - alert: PortainerServiceReplicaMismatch
+            expr: portainer_service_replicas_running != portainer_service_replicas_desired
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Service replica mismatch"
+              description: "Service {{ $labels.service_name }} has {{ $labels.running }} running replicas but {{ $labels.desired }} desired"
+          
+          - alert: PortainerAPIDown
+            expr: up{job="portainer-api"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Portainer API is down"
+              description: "Portainer API is not responding"
+          
+          # NEW: Supabase-specific alerts
+          - alert: SupabaseHighDBConnections
+            expr: supabase_db_connections_total > 80
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High database connections"
+              description: "Supabase has {{ $value }} database connections"
+          
+          - alert: SupabaseSlowQueries
+            expr: histogram_quantile(0.95, rate(supabase_query_duration_seconds_bucket[5m])) > 2
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Slow database queries"
+              description: "95th percentile query duration is {{ $value }}s"
+          
+          - alert: SupabaseRealtimeConnectionDrop
+            expr: increase(supabase_realtime_connections_total[5m]) < -10
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Real-time connection drop"
+              description: "Real-time connections dropped by {{ $value }}"
+          
+          # Agent-specific alerts
+          - alert: AgentDeploymentFailed
+            expr: agent_deployment_status{status="failed"} == 1
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Agent deployment failed"
+              description: "Agent {{ $labels.agent_name }} deployment failed"
+          
+          - alert: AgentUnhealthy
+            expr: agent_health_status == 0
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Agent is unhealthy"
+              description: "Agent {{ $labels.agent_name }} health check is failing"
 ```
 
-### AlertManager Configuration
+### Alert Manager Configuration
 
 ```yaml
 # k8s/monitoring/alertmanager-config.yaml
@@ -709,422 +914,402 @@ metadata:
 data:
   alertmanager.yml: |
     global:
-      smtp_smarthost: 'localhost:587'
-      smtp_from: 'alerts@yourdomain.com'
       slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alerts@yourdomain.com'
+      smtp_auth_username: 'alerts@yourdomain.com'
+      smtp_auth_password: 'your-email-password'
     
     route:
-      group_by: ['alertname']
+      group_by: ['alertname', 'cluster', 'service']
       group_wait: 10s
       group_interval: 10s
       repeat_interval: 1h
-      receiver: 'web.hook'
+      receiver: 'default'
       routes:
-      - match:
-          severity: critical
-        receiver: critical-alerts
-      - match:
-          severity: warning
-        receiver: warning-alerts
+        - match:
+            severity: critical
+          receiver: 'critical-alerts'
+        - match:
+            alertname: PortainerStackDown
+          receiver: 'portainer-alerts'
+        - match:
+            alertname: SupabaseHighDBConnections
+          receiver: 'supabase-alerts'
+        - match:
+            alertname: AgentDeploymentFailed
+          receiver: 'agent-alerts'
     
     receivers:
-    - name: 'web.hook'
-      webhook_configs:
-      - url: 'http://webhook-service:5000/alerts'
-    
-    - name: 'critical-alerts'
-      slack_configs:
-      - channel: '#alerts-critical'
-        title: '🚨 Critical Alert'
-        text: '{{ range .Alerts }}{{ .Annotations.summary }}: {{ .Annotations.description }}{{ end }}'
-        send_resolved: true
-      email_configs:
-      - to: 'oncall@yourdomain.com'
-        subject: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
-        body: |
-          {{ range .Alerts }}
-          Alert: {{ .Annotations.summary }}
-          Description: {{ .Annotations.description }}
-          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
-          {{ end }}
-      pagerduty_configs:
-      - routing_key: 'YOUR_PAGERDUTY_KEY'
-        description: '{{ .GroupLabels.alertname }}: {{ .Alerts | len }} alerts'
-    
-    - name: 'warning-alerts'
-      slack_configs:
-      - channel: '#alerts-warning'
-        title: '⚠️ Warning Alert'
-        text: '{{ range .Alerts }}{{ .Annotations.summary }}: {{ .Annotations.description }}{{ end }}'
-        send_resolved: true
-      email_configs:
-      - to: 'team@yourdomain.com'
-        subject: '⚠️ Warning: {{ .GroupLabels.alertname }}'
-        body: |
-          {{ range .Alerts }}
-          Alert: {{ .Annotations.summary }}
-          Description: {{ .Annotations.description }}
-          {{ end }}
+      - name: 'default'
+        slack_configs:
+          - channel: '#monitoring'
+            username: 'Prometheus'
+            title: 'Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+      
+      - name: 'critical-alerts'
+        slack_configs:
+          - channel: '#alerts-critical'
+            username: 'Prometheus'
+            title: '🚨 CRITICAL: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        email_configs:
+          - to: 'oncall@yourdomain.com'
+            subject: 'CRITICAL ALERT: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            body: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+      
+      - name: 'portainer-alerts'
+        slack_configs:
+          - channel: '#portainer-alerts'
+            username: 'Portainer Monitor'
+            title: '🐳 Portainer Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        webhook_configs:
+          - url: 'https://your-domain.com/api/webhooks/portainer-alert'
+            http_config:
+              bearer_token: 'your-webhook-token'
+      
+      - name: 'supabase-alerts'
+        slack_configs:
+          - channel: '#supabase-alerts'
+            username: 'Supabase Monitor'
+            title: '🗄️ Supabase Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        webhook_configs:
+          - url: 'https://your-supabase-url.supabase.co/rest/v1/alert_notifications'
+            http_config:
+              bearer_token: 'your-supabase-service-role-key'
+      
+      - name: 'agent-alerts'
+        slack_configs:
+          - channel: '#agent-alerts'
+            username: 'Agent Monitor'
+            title: '🤖 Agent Alert: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        webhook_configs:
+          - url: 'https://your-domain.com/api/webhooks/agent-alert'
+            http_config:
+              bearer_token: 'your-webhook-token'
 ```
 
-## 🔍 Distributed Tracing
+## 🔗 Real-time Integration
 
-### Jaeger Setup
-
-```yaml
-# k8s/monitoring/jaeger-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: jaeger
-  namespace: monitoring
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: jaeger
-  template:
-    metadata:
-      labels:
-        app: jaeger
-    spec:
-      containers:
-      - name: jaeger
-        image: jaegertracing/all-in-one:1.40
-        ports:
-        - containerPort: 16686
-          name: ui
-        - containerPort: 14268
-          name: collector
-        - containerPort: 6831
-          name: agent-compact
-        - containerPort: 6832
-          name: agent-binary
-        env:
-        - name: COLLECTOR_ZIPKIN_HTTP_PORT
-          value: "9411"
-        - name: SPAN_STORAGE_TYPE
-          value: "elasticsearch"
-        - name: ES_SERVER_URLS
-          value: "http://elasticsearch:9200"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-```
-
-### Application Tracing
+### Supabase Real-time Monitoring
 
 ```typescript
-// src/tracing/tracer.ts
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+// real-time-monitoring/src/supabase-monitor.ts
+import { createClient } from '@supabase/supabase-js';
+import WebSocket from 'ws';
 
-const jaegerExporter = new JaegerExporter({
-  endpoint: process.env.JAEGER_ENDPOINT || 'http://jaeger-collector:14268/api/traces',
-});
+export class SupabaseRealTimeMonitor {
+  private supabase: any;
+  private wsConnections: Map<string, WebSocket> = new Map();
 
-const sdk = new NodeSDK({
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: 'agent-launchpad-api',
-    [SemanticResourceAttributes.SERVICE_VERSION]: process.env.APP_VERSION || '1.0.0',
-    [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
-  }),
-  traceExporter: jaegerExporter,
-  instrumentations: [getNodeAutoInstrumentations()],
-});
-
-sdk.start();
-
-export default sdk;
-```
-
-## 📝 Logging
-
-### Centralized Logging Setup
-
-```yaml
-# k8s/monitoring/fluent-bit-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: monitoring
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Daemon Off
-        Flush 1
-        Log_Level info
-        Parsers_File parsers.conf
-        HTTP_Server On
-        HTTP_Listen 0.0.0.0
-        HTTP_Port 2020
+  constructor() {
+    this.supabase = createClient(
+      process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    );
     
-    [INPUT]
-        Name tail
-        Path /var/log/containers/*agent*.log
-        Parser docker
-        Tag kube.*
-        Refresh_Interval 5
-        Mem_Buf_Limit 50MB
-        Skip_Long_Lines On
+    this.setupRealTimeSubscriptions();
+  }
+
+  private setupRealTimeSubscriptions() {
+    // Monitor agent status changes
+    this.supabase
+      .channel('agent-monitoring')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'agents'
+      }, (payload: any) => {
+        this.handleAgentStatusChange(payload);
+      })
+      .subscribe();
+
+    // Monitor container events
+    this.supabase
+      .channel('container-events')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'container_events'
+      }, (payload: any) => {
+        this.handleContainerEvent(payload);
+      })
+      .subscribe();
+
+    // Monitor metrics
+    this.supabase
+      .channel('metrics-stream')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'agent_metrics'
+      }, (payload: any) => {
+        this.handleMetricsUpdate(payload);
+      })
+      .subscribe();
+  }
+
+  private handleAgentStatusChange(payload: any) {
+    const { eventType, new: newData, old: oldData } = payload;
     
-    [INPUT]
-        Name tail
-        Path /var/log/containers/*api*.log
-        Parser docker
-        Tag kube.*
-        Refresh_Interval 5
-        Mem_Buf_Limit 50MB
-        Skip_Long_Lines On
+    console.log(`Agent status changed: ${eventType}`, newData);
     
-    [FILTER]
-        Name kubernetes
-        Match kube.*
-        Kube_URL https://kubernetes.default.svc:443
-        Kube_CA_File /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix kube.var.log.containers.
-        Merge_Log On
-        Keep_Log Off
+    // Forward to monitoring systems
+    this.forwardToPrometheus({
+      type: 'agent_status_change',
+      agent_id: newData.id,
+      status: newData.status,
+      timestamp: new Date().toISOString()
+    });
     
-    [OUTPUT]
-        Name es
-        Match kube.*
-        Host elasticsearch
-        Port 9200
-        Index kubernetes
-        Type _doc
-        Retry_Limit 5
-  
-  parsers.conf: |
-    [PARSER]
-        Name docker
-        Format json
-        Time_Key time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep On
-```
+    // Send to connected WebSocket clients
+    this.broadcastToClients({
+      type: 'agent_status_update',
+      data: newData
+    });
+  }
 
-### Application Logging
+  private handleContainerEvent(payload: any) {
+    const event = payload.new;
+    
+    console.log('Container event:', event);
+    
+    // Forward to Portainer webhook if needed
+    if (event.event_type === 'container_stop' || event.event_type === 'container_start') {
+      this.notifyPortainer(event);
+    }
+    
+    // Update metrics
+    this.updateContainerMetrics(event);
+  }
 
-```typescript
-// src/logging/logger.ts
-import winston from 'winston';
-import { ElasticsearchTransport } from 'winston-elasticsearch';
+  private handleMetricsUpdate(payload: any) {
+    const metrics = payload.new;
+    
+    // Forward to Prometheus
+    this.forwardToPrometheus({
+      type: 'metrics_update',
+      agent_id: metrics.agent_id,
+      metrics: metrics,
+      timestamp: metrics.timestamp
+    });
+  }
 
-const esTransportOpts = {
-  level: 'info',
-  clientOpts: {
-    node: process.env.ELASTICSEARCH_URL || 'http://elasticsearch:9200'
-  },
-  index: 'agent-launchpad-logs'
-};
+  private forwardToPrometheus(data: any) {
+    // Push metrics to Prometheus pushgateway
+    // Implementation depends on your Prometheus setup
+  }
 
-export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json(),
-    winston.format.metadata({ fillExcept: ['message', 'level', 'timestamp'] })
-  ),
-  defaultMeta: {
-    service: 'agent-launchpad-api',
-    version: process.env.APP_VERSION || '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
-  },
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    }),
-    new ElasticsearchTransport(esTransportOpts)
-  ]
-});
+  private broadcastToClients(message: any) {
+    this.wsConnections.forEach((ws, clientId) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+      }
+    });
+  }
 
-// Security event logging
-export function logSecurityEvent(event: {
-  type: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  userId?: string;
-  sourceIp?: string;
-  details: any;
-}) {
-  logger.warn('Security event detected', {
-    event_type: 'security',
-    security_event_type: event.type,
-    severity: event.severity,
-    user_id: event.userId,
-    source_ip: event.sourceIp,
-    details: event.details
-  });
-}
+  private notifyPortainer(event: any) {
+    // Send webhook to Portainer for container events
+    // Implementation depends on your Portainer webhook setup
+  }
 
-// Performance logging
-export function logPerformance(operation: string, duration: number, metadata?: any) {
-  logger.info('Performance metric', {
-    event_type: 'performance',
-    operation,
-    duration_ms: duration,
-    ...metadata
-  });
+  private updateContainerMetrics(event: any) {
+    // Update container metrics in Prometheus
+    // Implementation depends on your metrics collection setup
+  }
 }
 ```
 
-## 📱 Monitoring Automation
+### WebSocket Server for Real-time Updates
 
-### Health Check Scripts
+```typescript
+// real-time-monitoring/src/websocket-server.ts
+import WebSocket from 'ws';
+import { IncomingMessage } from 'http';
+import jwt from 'jsonwebtoken';
+
+export class MonitoringWebSocketServer {
+  private wss: WebSocket.Server;
+  private clients: Map<string, WebSocket> = new Map();
+
+  constructor(port: number) {
+    this.wss = new WebSocket.Server({ 
+      port,
+      verifyClient: this.verifyClient.bind(this)
+    });
+    
+    this.setupWebSocketHandlers();
+  }
+
+  private verifyClient(info: { req: IncomingMessage }): boolean {
+    const token = this.extractTokenFromRequest(info.req);
+    
+    if (!token) {
+      return false;
+    }
+    
+    try {
+      jwt.verify(token, process.env.JWT_SECRET || 'secret');
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  private extractTokenFromRequest(req: IncomingMessage): string | null {
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      return auth.substring(7);
+    }
+    return null;
+  }
+
+  private setupWebSocketHandlers() {
+    this.wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
+      const clientId = this.generateClientId();
+      this.clients.set(clientId, ws);
+      
+      console.log(`Client connected: ${clientId}`);
+      
+      ws.on('message', (message: string) => {
+        try {
+          const data = JSON.parse(message);
+          this.handleClientMessage(clientId, data);
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
+      });
+      
+      ws.on('close', () => {
+        this.clients.delete(clientId);
+        console.log(`Client disconnected: ${clientId}`);
+      });
+      
+      // Send initial connection confirmation
+      ws.send(JSON.stringify({
+        type: 'connection_confirmed',
+        client_id: clientId,
+        timestamp: new Date().toISOString()
+      }));
+    });
+  }
+
+  private handleClientMessage(clientId: string, data: any) {
+    switch (data.type) {
+      case 'subscribe_agent':
+        this.subscribeToAgent(clientId, data.agent_id);
+        break;
+      case 'subscribe_metrics':
+        this.subscribeToMetrics(clientId, data.metric_type);
+        break;
+      case 'unsubscribe':
+        this.unsubscribeClient(clientId, data.subscription_id);
+        break;
+      default:
+        console.log(`Unknown message type: ${data.type}`);
+    }
+  }
+
+  private subscribeToAgent(clientId: string, agentId: string) {
+    // Store subscription information
+    // Implementation depends on your subscription management
+  }
+
+  private subscribeToMetrics(clientId: string, metricType: string) {
+    // Store metrics subscription
+    // Implementation depends on your metrics streaming setup
+  }
+
+  private unsubscribeClient(clientId: string, subscriptionId: string) {
+    // Remove subscription
+    // Implementation depends on your subscription management
+  }
+
+  private generateClientId(): string {
+    return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  broadcast(message: any) {
+    this.clients.forEach((ws, clientId) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+      }
+    });
+  }
+
+  sendToClient(clientId: string, message: any) {
+    const ws = this.clients.get(clientId);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+}
+```
+
+## 📋 Complete Monitoring Setup Script
 
 ```bash
 #!/bin/bash
-# scripts/health-check.sh
+# Complete monitoring setup with Portainer and Supabase integration
 
-ENVIRONMENT=${1:-production}
-NAMESPACE="production"
+echo "🚀 Setting up enhanced monitoring stack..."
 
-echo "🔍 Running health checks for $ENVIRONMENT environment"
+# 1. Create monitoring namespace
+kubectl create namespace monitoring
 
-# Check API health
-echo "1. Checking API health..."
-API_HEALTH=$(kubectl exec -n $NAMESPACE deployment/api -- curl -s http://localhost:3000/health)
-if echo "$API_HEALTH" | grep -q "HEALTHY"; then
-    echo "✅ API is healthy"
-else
-    echo "❌ API health check failed"
-    echo "$API_HEALTH"
-    exit 1
-fi
+# 2. Deploy Prometheus with enhanced configuration
+echo "📊 Deploying Prometheus..."
+kubectl apply -f k8s/monitoring/prometheus-config.yaml
+kubectl apply -f k8s/monitoring/prometheus-deployment.yaml
+kubectl apply -f k8s/monitoring/prometheus-service.yaml
 
-# Check database connectivity
-echo "2. Checking database connectivity..."
-DB_CHECK=$(kubectl exec -n $NAMESPACE deployment/api -- node -e "
-const { Pool } = require('pg');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-pool.query('SELECT 1')
-  .then(() => { console.log('OK'); process.exit(0); })
-  .catch(err => { console.error(err.message); process.exit(1); });
-")
-if [ "$DB_CHECK" = "OK" ]; then
-    echo "✅ Database is accessible"
-else
-    echo "❌ Database connection failed"
-    exit 1
-fi
+# 3. Deploy Grafana
+echo "📈 Deploying Grafana..."
+kubectl apply -f k8s/monitoring/grafana-deployment.yaml
+kubectl apply -f k8s/monitoring/grafana-service.yaml
 
-# Check Redis connectivity
-echo "3. Checking Redis connectivity..."
-REDIS_CHECK=$(kubectl exec -n $NAMESPACE deployment/api -- node -e "
-const redis = require('redis');
-const client = redis.createClient({ url: process.env.REDIS_URL });
-client.connect()
-  .then(() => client.ping())
-  .then(() => { console.log('OK'); process.exit(0); })
-  .catch(err => { console.error(err.message); process.exit(1); });
-")
-if [ "$REDIS_CHECK" = "OK" ]; then
-    echo "✅ Redis is accessible"
-else
-    echo "❌ Redis connection failed"
-    exit 1
-fi
+# 4. Deploy AlertManager
+echo "🚨 Deploying AlertManager..."
+kubectl apply -f k8s/monitoring/alertmanager-config.yaml
+kubectl apply -f k8s/monitoring/alertmanager-deployment.yaml
+kubectl apply -f k8s/monitoring/alertmanager-service.yaml
 
-# Check active agents
-echo "4. Checking active agents..."
-ACTIVE_AGENTS=$(kubectl get pods -n agents --field-selector=status.phase=Running | grep -c "Running")
-echo "📊 Active agents: $ACTIVE_AGENTS"
+# 5. Deploy Portainer metrics discovery
+echo "🐳 Deploying Portainer metrics discovery..."
+kubectl apply -f k8s/monitoring/portainer-metrics-discovery.yaml
 
-echo "✅ All health checks passed"
+# 6. Deploy Supabase metrics collector
+echo "🗄️ Deploying Supabase metrics collector..."
+kubectl apply -f k8s/monitoring/supabase-metrics-collector.yaml
+
+# 7. Deploy real-time monitoring services
+echo "⚡ Deploying real-time monitoring..."
+kubectl apply -f k8s/monitoring/realtime-monitor.yaml
+kubectl apply -f k8s/monitoring/websocket-server.yaml
+
+# 8. Configure Grafana dashboards
+echo "📊 Configuring Grafana dashboards..."
+kubectl apply -f k8s/monitoring/grafana-dashboards.yaml
+
+# 9. Setup ingress for monitoring services
+echo "🌐 Setting up ingress..."
+kubectl apply -f k8s/monitoring/monitoring-ingress.yaml
+
+# 10. Verify deployment
+echo "✅ Verifying deployment..."
+kubectl get pods -n monitoring
+kubectl get services -n monitoring
+
+echo "🎉 Enhanced monitoring stack deployed successfully!"
+echo "📊 Grafana: https://grafana.yourdomain.com"
+echo "🚨 AlertManager: https://alertmanager.yourdomain.com"
+echo "📈 Prometheus: https://prometheus.yourdomain.com"
+echo "🐳 Portainer: https://portainer.yourdomain.com"
+echo "🗄️ Supabase: https://your-project.supabase.co"
 ```
 
-### Monitoring Dashboard URLs
-
-```bash
-#!/bin/bash
-# scripts/monitoring-urls.sh
-
-NAMESPACE="monitoring"
-DOMAIN="yourdomain.com"
-
-echo "📊 Monitoring Dashboard URLs"
-echo "==========================="
-
-# Get service URLs
-GRAFANA_URL="https://grafana.$DOMAIN"
-PROMETHEUS_URL="https://prometheus.$DOMAIN"
-JAEGER_URL="https://jaeger.$DOMAIN"
-ALERTMANAGER_URL="https://alertmanager.$DOMAIN"
-
-echo "📈 Grafana: $GRAFANA_URL"
-echo "📊 Prometheus: $PROMETHEUS_URL"
-echo "🔍 Jaeger: $JAEGER_URL"
-echo "🚨 AlertManager: $ALERTMANAGER_URL"
-
-# Get credentials
-echo ""
-echo "🔑 Credentials"
-echo "=============="
-GRAFANA_PASSWORD=$(kubectl get secret grafana-admin-secret -n $NAMESPACE -o jsonpath="{.data.password}" | base64 -d)
-echo "Grafana Admin Password: $GRAFANA_PASSWORD"
-
-echo ""
-echo "🚀 Quick Links"
-echo "=============="
-echo "System Overview: $GRAFANA_URL/d/system-overview"
-echo "Agent Performance: $GRAFANA_URL/d/agent-performance"
-echo "Security Dashboard: $GRAFANA_URL/d/security"
-echo "Alert Rules: $PROMETHEUS_URL/alerts"
-echo "Service Map: $JAEGER_URL/search"
-```
-
-## 🚀 Next Steps
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #4CAF50;">
-<h4><a href="getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
-<p>Set up basic monitoring during initial deployment</p>
-</div>
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #9C27B0;">
-<h4><a href="deployment" style="text-decoration: none; color: #9C27B0;">⚙️ Deployment</a></h4>
-<p>Integrate monitoring into your deployment pipeline</p>
-</div>
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #F44336;">
-<h4><a href="security" style="text-decoration: none; color: #F44336;">🔐 Security</a></h4>
-<p>Configure security monitoring and alerting</p>
-</div>
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #E91E63;">
-<h4><a href="support" style="text-decoration: none; color: #E91E63;">📞 Support</a></h4>
-<p>Get help with monitoring setup and troubleshooting</p>
-</div>
-
-</div>
-
----
-
-## 📋 Monitoring Checklist
-
-### Essential Monitoring Setup
-
-- [ ] **Prometheus** - Metrics collection and storage
-- [ ] **Grafana** - Visualization dashboards
-- [ ] **AlertManager** - Alert routing and notifications
-- [ ] **Jaeger** - Distributed tracing
-- [ ] **Centralized Logging** - Log aggregation and search
-- [ ] **Health Checks** - Automated system verification
-- [ ] **Security Monitoring** - Security event tracking
-- [ ] **Performance Monitoring** - Application performance metrics
-
-Ready to monitor your AI agents like a pro? Follow this comprehensive guide to set up world-class observability! 🚀 
+This enhanced monitoring setup provides comprehensive observability across your entire multi-agent infrastructure, integrating Portainer container management, Supabase database monitoring, and real-time agent performance tracking in a unified dashboard and alerting system. 

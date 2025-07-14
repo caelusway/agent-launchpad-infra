@@ -8,7 +8,7 @@ description: "Detailed system architecture with flow charts and component docume
 
 ## 🎯 Overview
 
-The Multi-Agent Infrastructure at Scale is designed as a scalable, secure infrastructure backend that automates the deployment and management of Eliza-based AI agents. The system follows a microservices architecture with clear separation of concerns and robust security measures.
+The Multi-Agent Infrastructure at Scale is designed as a scalable, secure infrastructure backend that automates the deployment and management of Eliza-based AI agents. The system follows a microservices architecture with clear separation of concerns and robust security measures, with abstracted container management and orchestration through our unified API layer.
 
 ## 🧩 Core Components
 
@@ -69,17 +69,20 @@ multi-agent-infra-backend/
 │   ├── controllers/
 │   │   ├── agent.controller.ts
 │   │   ├── deployment.controller.ts
-│   │   └── monitoring.controller.ts
+│   │   ├── monitoring.controller.ts
+│   │   └── portainer.controller.ts      # New: Portainer integration
 │   ├── services/
 │   │   ├── agent-config.service.ts
 │   │   ├── build.service.ts
 │   │   ├── kubernetes.service.ts
 │   │   ├── health-monitor.service.ts
 │   │   ├── deployment-orchestrator.service.ts
-│   │   └── notification.service.ts
+│   │   ├── notification.service.ts
+│   │   └── portainer.service.ts         # New: Portainer service
 │   ├── infrastructure/
 │   │   ├── docker/
-│   │   └── kubernetes/
+│   │   ├── kubernetes/
+│   │   └── portainer/                   # New: Portainer configs
 │   └── types/
 │       └── interfaces.ts
 ```
@@ -90,15 +93,51 @@ multi-agent-infra-backend/
 - **CLI Integration**: Works with `elizaos` commands for development
 - **Modular Architecture**: Aligns with Eliza's TypeScript monorepo structure
 
-## 🔄 Complete System Flow
+### 🟢 Portainer Container Management Layer (New Integration)
 
-### End-to-End Process Flow
+**Portainer** is now integrated as the central container management and orchestration layer:
+
+```typescript
+// Portainer Integration Structure
+portainer-integration/
+├── config/
+│   ├── portainer-deployment.yaml       # Portainer Kubernetes deployment
+│   ├── portainer-rbac.yaml            # Role-based access control
+│   └── portainer-ingress.yaml         # Ingress configuration
+├── api/
+│   ├── portainer-client.ts            # Portainer API client
+│   ├── container-manager.ts           # Container lifecycle management
+│   └── stack-orchestrator.ts          # Stack deployment orchestration
+├── templates/
+│   ├── eliza-agent-template.json      # Eliza agent container template
+│   ├── monitoring-stack.json          # Monitoring stack template
+│   └── security-stack.json            # Security services template
+└── workflows/
+    ├── agent-deployment.workflow.ts   # Agent deployment workflow
+    ├── scaling.workflow.ts            # Auto-scaling workflow
+    └── maintenance.workflow.ts        # Maintenance operations
+```
+
+**Portainer Features:**
+- **🎛️ Container Management**: Complete lifecycle management of Docker containers
+- **☸️ Kubernetes Integration**: Native Kubernetes cluster management
+- **🔌 REST API**: Comprehensive REST API for programmatic control
+- **📊 Monitoring**: Built-in container monitoring and logging
+- **🔒 Security**: Role-based access control and security policies
+- **📦 Templates**: Pre-configured application templates
+- **🌐 Multi-cluster**: Support for multiple Kubernetes clusters
+
+## 🔄 Enhanced System Flow with Portainer
+
+### Complete End-to-End Process Flow
 
 ```mermaid
 sequenceDiagram
     participant UI as Frontend UI
     participant API as REST API Gateway
+    participant Supabase as Supabase Auth/DB
     participant Config as Config Service
+    participant Portainer as Portainer Manager
     participant Queue as Deployment Queue
     participant Build as Build Service
     participant Registry as Container Registry
@@ -108,230 +147,317 @@ sequenceDiagram
     
     Note over UI,Notification: Phase 1: Configuration Submission
     UI->>API: POST /agents (Agent Configuration)
-    API->>API: Validate Request
+    API->>Supabase: Validate JWT Token
+    Supabase->>API: User Authenticated
     API->>Config: createAgentConfig()
     Config->>Config: Generate Eliza Character File
-    Config->>Config: Store in Database
+    Config->>Supabase: Store in Database
     Config->>API: Return Agent ID
     API->>Queue: Queue Deployment Job
     API->>UI: Return {agentId, status: "QUEUED"}
     
-    Note over UI,Notification: Phase 2: Asynchronous Processing
-    UI->>API: GET /agents/{agentId}/status
-    API->>Config: Get Agent Status
-    Config->>UI: Return Current Status
+    Note over UI,Notification: Phase 2: Portainer Integration
+    UI->>Portainer: Check Container Status
+    Portainer->>K8s: Query Cluster Resources
+    K8s->>Portainer: Return Resource Status
+    Portainer->>UI: Return Cluster Health
     
-    Note over UI,Notification: Phase 3: Build Process
+    Note over UI,Notification: Phase 3: Build & Registry Process
     Queue->>Build: Process Build Job
     Build->>Build: Generate Dockerfile
     Build->>Build: Generate Package.json
-    Build->>Build: Generate Environment Files
-    Build->>Build: Generate Startup Scripts
     Build->>Build: Build Docker Image
     Build->>Registry: Push Image
-    Build->>Queue: Build Complete
+    Build->>Portainer: Create Container Template
+    Portainer->>Queue: Template Ready
     
-    Note over UI,Notification: Phase 4: Deployment Process
-    Queue->>K8s: Deploy Agent
-    K8s->>K8s: Generate K8s Manifests
-    K8s->>K8s: Apply to Cluster
-    K8s->>K8s: Wait for Pods Ready
-    K8s->>Queue: Deployment Complete
+    Note over UI,Notification: Phase 4: Portainer Deployment
+    Queue->>Portainer: Deploy via Portainer API
+    Portainer->>Portainer: Validate Template
+    Portainer->>K8s: Deploy Container Stack
+    K8s->>K8s: Create Pods, Services, Secrets
+    K8s->>Portainer: Deployment Status
+    Portainer->>Queue: Deployment Complete
     
-    Note over UI,Notification: Phase 5: Monitoring Setup
+    Note over UI,Notification: Phase 5: Monitoring Integration
     Queue->>Monitor: Setup Monitoring
-    Monitor->>Monitor: Configure Prometheus
-    Monitor->>Monitor: Setup Health Checks
-    Monitor->>Monitor: Configure Alerts
+    Monitor->>Portainer: Register Container Monitoring
+    Portainer->>Monitor: Container Metrics
+    Monitor->>Supabase: Store Metrics
     Monitor->>Queue: Monitoring Ready
     
-    Note over UI,Notification: Phase 6: Completion
-    Queue->>Config: Update Status to DEPLOYED
-    Queue->>Notification: Send Success Notification
-    Notification->>UI: Deployment Success
+    Note over UI,Notification: Phase 6: Real-time Updates
+    Portainer->>Supabase: Container Status Updates
+    Supabase->>UI: Real-time Status via WebSocket
+    UI->>User: Display Live Agent Status
     
-    Note over UI,Notification: Phase 7: Ongoing Monitoring
-    UI->>API: GET /agents/{agentId}/status
-    API->>Monitor: Check Agent Health
-    Monitor->>API: Return Health Status
-    API->>UI: Return Agent Status + Health
+    Note over UI,Notification: Phase 7: Operational Management
+    UI->>Portainer: Scale Agent Request
+    Portainer->>K8s: Update Deployment Replicas
+    K8s->>Portainer: Scaling Complete
+    Portainer->>Supabase: Update Agent Status
+    Supabase->>UI: Real-time Scale Update
 ```
 
-## 🏗️ Detailed Component Architecture
-
-### Frontend Layer
+## 🏗️ System Architecture Diagram
 
 ```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        UI[Agent Configuration UI]
-        Form[Onboarding Form]
-        Status[Status Dashboard]
-        Monitor[Monitoring Dashboard]
+flowchart TB
+    subgraph "👤 User Layer"
+        User[👤 User/Developer]
+        WebUI[🌐 Web Interface]
+        API[🔌 REST API]
     end
-    
-    subgraph "API Layer"
-        Gateway[API Gateway]
-        Auth[Authentication]
-        Validation[Request Validation]
-        RateLimit[Rate Limiting]
+
+    subgraph "🔐 Authentication & Security"
+        SupaAuth[🔑 Supabase Auth<br/>OAuth, Email, Magic Links]
+        JWT[🎫 JWT Tokens<br/>Auto-refresh & Validation]
+        RLS[🛡️ Row-Level Security<br/>Data Isolation]
     end
-    
-    subgraph "Backend Services"
-        ConfigAPI[Configuration API]
-        ConfigService[Agent Config Service]
-        QueueService[Deployment Queue]
-        BuildService[Build Service]
-        K8sService[Kubernetes Service]
-        MonitorService[Monitoring Service]
-        NotificationService[Notification Service]
+
+    subgraph "📊 Database & Storage"
+        SupaDB[(🗄️ Supabase Database<br/>PostgreSQL + Real-time)]
+        AgentTable[🤖 Agents Table]
+        MetricsTable[📈 Metrics Table]
+        LogsTable[📋 Logs Table]
+        SecretsTable[🔐 Secrets Table]
     end
-    
-    subgraph "Infrastructure Layer"
-        DB[(PostgreSQL)]
-        Redis[(Redis Queue)]
-        Registry[Container Registry]
-        K8sCluster[Kubernetes Cluster]
-        Monitoring[Prometheus/Grafana]
+
+    subgraph "🤖 Agent Management"
+        AgentService[⚙️ Agent Service<br/>Creation & Management]
+        CharacterConfig[🎭 Character Configuration<br/>Personality, Bio, Instructions]
+        PluginConfig[🔌 Plugin Configuration<br/>Discord, Telegram, Twitter]
+        SecretMgmt[🔐 Secret Management<br/>API Keys & Tokens]
     end
-    
-    subgraph "Eliza Runtime"
-        ElizaCore[Eliza Core]
-        CharacterSystem[Character System]
-        PluginSystem[Plugin System]
-        ClientIntegrations[Platform Clients]
+
+    subgraph "🎛️ Container Management Layer"
+        ContainerService[🎛️ Container Service<br/>Abstracted Orchestration]
+        DeploymentEngine[🔌 Deployment Engine<br/>Container Operations]
+        TemplateEngine[📦 Template Engine<br/>Eliza Agent Templates]
+        ContainerMonitor[📊 Container Monitor<br/>Health & Performance]
+        ResourceManager[🏗️ Resource Manager<br/>Scaling & Load Balancing]
     end
-    
-    UI --> Gateway
-    Form --> Gateway
-    Status --> Gateway
-    Monitor --> Gateway
-    
-    Gateway --> Auth
-    Auth --> Validation
-    Validation --> RateLimit
-    RateLimit --> ConfigAPI
-    
-    ConfigAPI --> ConfigService
-    ConfigService --> QueueService
-    ConfigService --> DB
-    
-    QueueService --> BuildService
-    QueueService --> Redis
-    
-    BuildService --> Registry
-    BuildService --> K8sService
-    
-    K8sService --> K8sCluster
-    K8sService --> MonitorService
-    
-    MonitorService --> Monitoring
-    MonitorService --> NotificationService
-    
-    K8sCluster --> ElizaCore
-    ConfigService --> CharacterSystem
-    ConfigService --> PluginSystem
-    ElizaCore --> ClientIntegrations
-    
-    NotificationService --> UI
+
+    subgraph "🏗️ Deployment Pipeline"
+        ContainerBuild[📦 Container Build<br/>Eliza + Plugins]
+        SecurityScan[🛡️ Security Scan<br/>Trivy Vulnerability Check]
+        Registry[📋 Container Registry<br/>Secure Image Storage]
+        K8sDeploy[☸️ Kubernetes Deploy<br/>Pods, Services, Secrets]
+    end
+
+    subgraph "🌐 Platform Integrations"
+        Discord[💬 Discord Bot<br/>Real-time Chat]
+        Telegram[📱 Telegram Bot<br/>Messaging & Commands]
+        Twitter[🐦 Twitter Bot<br/>Social Engagement]
+        WebSocket[⚡ WebSocket<br/>Real-time Updates]
+    end
+
+    subgraph "📊 Monitoring & Analytics"
+        RealTimeMetrics[📈 Real-time Metrics<br/>Performance & Health]
+        LogStreaming[📋 Log Streaming<br/>Agent Activities]
+        Prometheus[📊 Prometheus<br/>Metrics Collection]
+        Grafana[📈 Grafana<br/>Dashboards & Alerts]
+        SupaRealtime[⚡ Supabase Real-time<br/>Live Updates]
+    end
+
+    subgraph "🚨 Security & Compliance"
+        ThreatDetection[🔍 Threat Detection<br/>Automated Response]
+        SecurityEvents[🚨 Security Events<br/>Audit Logging]
+        Compliance[📋 Compliance<br/>GDPR, SOC 2]
+        Incident[🚑 Incident Response<br/>Auto-remediation]
+    end
+
+    subgraph "⚖️ Auto-scaling & Load Balancing"
+        HPA[📊 Horizontal Pod Autoscaler]
+        LoadBalancer[⚖️ Load Balancer]
+        ResourceMgmt[💾 Resource Management]
+    end
+
+    %% User Interactions
+    User --> WebUI
+    User --> API
+    WebUI --> SupaAuth
+    API --> SupaAuth
+
+    %% Authentication Flow
+    SupaAuth --> JWT
+    JWT --> RLS
+    RLS --> SupaDB
+
+    %% Database Connections
+    SupaDB --> AgentTable
+    SupaDB --> MetricsTable
+    SupaDB --> LogsTable
+    SupaDB --> SecretsTable
+
+    %% Agent Management Flow
+    JWT --> AgentService
+    AgentService --> CharacterConfig
+    AgentService --> PluginConfig
+    AgentService --> SecretMgmt
+    AgentService --> SupaDB
+
+    %% Container Management Integration
+    AgentService --> ContainerService
+    ContainerService --> DeploymentEngine
+    ContainerService --> TemplateEngine
+    ContainerService --> ContainerMonitor
+    ContainerService --> ResourceManager
+
+    %% Deployment Pipeline
+    AgentService --> ContainerBuild
+    ContainerBuild --> SecurityScan
+    SecurityScan --> Registry
+    Registry --> DeploymentEngine
+    DeploymentEngine --> K8sDeploy
+    SecretMgmt --> K8sDeploy
+
+    %% Platform Deployments
+    K8sDeploy --> Discord
+    K8sDeploy --> Telegram
+    K8sDeploy --> Twitter
+    K8sDeploy --> WebSocket
+
+    %% Monitoring Connections
+    K8sDeploy --> RealTimeMetrics
+    ContainerMonitor --> RealTimeMetrics
+    Discord --> LogStreaming
+    Telegram --> LogStreaming
+    Twitter --> LogStreaming
+    RealTimeMetrics --> SupaDB
+    LogStreaming --> SupaDB
+    RealTimeMetrics --> Prometheus
+    Prometheus --> Grafana
+    SupaDB --> SupaRealtime
+    SupaRealtime --> WebUI
+
+    %% Security & Compliance
+    SupaDB --> SecurityEvents
+    ContainerService --> SecurityEvents
+    SecurityEvents --> ThreatDetection
+    ThreatDetection --> Incident
+    SecurityEvents --> Compliance
+
+    %% Auto-scaling
+    RealTimeMetrics --> HPA
+    ContainerMonitor --> HPA
+    ResourceManager --> HPA
+    HPA --> K8sDeploy
+    K8sDeploy --> LoadBalancer
+    LoadBalancer --> ResourceMgmt
+
+    %% Real-time Updates
+    SupaRealtime --> RealTimeMetrics
+    SupaRealtime --> LogStreaming
+    SupaRealtime --> SecurityEvents
+    ContainerService --> SupaRealtime
+
+    %% Enhanced Styling
+    classDef userStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
+    classDef authStyle fill:#e8f5e8,stroke:#4caf50,stroke-width:3px,color:#000
+    classDef dbStyle fill:#fff3e0,stroke:#ff9800,stroke-width:3px,color:#000
+    classDef agentStyle fill:#f3e5f5,stroke:#9c27b0,stroke-width:3px,color:#000
+    classDef containerStyle fill:#e1f5fe,stroke:#00bcd4,stroke-width:3px,color:#000
+    classDef deployStyle fill:#e0f2f1,stroke:#009688,stroke-width:3px,color:#000
+    classDef platformStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:3px,color:#000
+    classDef monitorStyle fill:#fce4ec,stroke:#e91e63,stroke-width:3px,color:#000
+    classDef securityStyle fill:#ffebee,stroke:#f44336,stroke-width:3px,color:#000
+    classDef scalingStyle fill:#f1f8e9,stroke:#8bc34a,stroke-width:3px,color:#000
+
+    class User,WebUI,API userStyle
+    class SupaAuth,JWT,RLS authStyle
+    class SupaDB,AgentTable,MetricsTable,LogsTable,SecretsTable dbStyle
+    class AgentService,CharacterConfig,PluginConfig,SecretMgmt agentStyle
+    class ContainerService,DeploymentEngine,TemplateEngine,ContainerMonitor,ResourceManager containerStyle
+    class ContainerBuild,SecurityScan,Registry,K8sDeploy deployStyle
+    class Discord,Telegram,Twitter,WebSocket platformStyle
+    class RealTimeMetrics,LogStreaming,Prometheus,Grafana,SupaRealtime monitorStyle
+    class ThreatDetection,SecurityEvents,Compliance,Incident securityStyle
+    class HPA,LoadBalancer,ResourceMgmt scalingStyle
 ```
 
-### Deployment Pipeline Architecture
+## 🛠️ Component Integration Details
 
-```mermaid
-flowchart TD
-    Start([🚀 Start Deployment]) --> Validate[✅ Validate Configuration]
-    Validate --> Queue[📋 Queue Build Job]
-    Queue --> Build[🔨 Build Container Image]
-    Build --> Scan[🛡️ Security Scan]
-    Scan --> ScanPassed{🔍 Scan Passed?}
+### Portainer-Supabase Integration
+
+```typescript
+// Portainer Service Integration
+export class PortainerService {
+  constructor(
+    private supabase: SupabaseClient,
+    private portainerClient: PortainerClient
+  ) {}
+
+  async deployAgent(agentConfig: AgentConfig): Promise<DeploymentResult> {
+    // 1. Create container template from Eliza config
+    const template = await this.createElizaTemplate(agentConfig);
     
-    ScanPassed -->|✅ Yes| Deploy[🚀 Deploy to Kubernetes]
-    ScanPassed -->|❌ No| ScanFailed[❌ Block Deployment]
+    // 2. Deploy via Portainer API
+    const deployment = await this.portainerClient.deployStack(template);
     
-    Deploy --> HealthCheck[❤️ Health Check]
-    HealthCheck --> HealthPassed{💚 Health OK?}
+    // 3. Store deployment info in Supabase
+    await this.supabase
+      .from('agent_deployments')
+      .insert({
+        agent_id: agentConfig.id,
+        portainer_stack_id: deployment.id,
+        status: 'deploying',
+        created_at: new Date().toISOString()
+      });
     
-    HealthPassed -->|✅ Yes| Monitor[📊 Setup Monitoring]
-    HealthPassed -->|❌ No| Rollback[🔄 Rollback]
+    // 4. Setup monitoring
+    await this.setupContainerMonitoring(deployment.id);
     
-    Monitor --> Success[✅ Deployment Success]
-    Rollback --> Failed[❌ Deployment Failed]
-    ScanFailed --> Failed
-    
-    Success --> Notify[📢 Notify Success]
-    Failed --> NotifyFail[📢 Notify Failure]
-    
-    style Start fill:#e8f5e8
-    style Success fill:#4caf50
-    style Failed fill:#f44336
-    style Scan fill:#fff3e0
-    style Monitor fill:#e1f5fe
+    return deployment;
+  }
+}
 ```
 
-### Data Flow Architecture
+### Unified API Layer
 
-```mermaid
-graph LR
-    subgraph "Data Input"
-        Config[Agent Configuration]
-        Secrets[API Keys/Secrets]
-        Resources[Resource Limits]
-    end
+```typescript
+// Enhanced API Controller with Portainer Integration
+@Controller('/api/agents')
+export class AgentController {
+  constructor(
+    private agentService: AgentService,
+    private portainerService: PortainerService,
+    private supabase: SupabaseClient
+  ) {}
+
+  @Post()
+  async createAgent(@Body() config: AgentConfig, @Headers() headers: any) {
+    // 1. Validate Supabase JWT
+    const user = await this.supabase.auth.getUser(headers.authorization);
     
-    subgraph "Processing"
-        Transform[Transform to Eliza Format]
-        Generate[Generate Manifests]
-        Build[Build Container]
-    end
+    // 2. Create agent config
+    const agent = await this.agentService.createAgent(config);
     
-    subgraph "Storage"
-        ConfigDB[(Configuration DB)]
-        SecretStore[(Secret Store)]
-        Registry[(Container Registry)]
-    end
+    // 3. Deploy via Portainer
+    const deployment = await this.portainerService.deployAgent(agent);
     
-    subgraph "Runtime"
-        K8sPod[Kubernetes Pod]
-        ElizaAgent[Eliza Agent]
-        Monitoring[Monitoring Data]
-    end
-    
-    Config --> Transform
-    Secrets --> Transform
-    Resources --> Transform
-    
-    Transform --> Generate
-    Generate --> Build
-    
-    Transform --> ConfigDB
-    Secrets --> SecretStore
-    Build --> Registry
-    
-    ConfigDB --> K8sPod
-    SecretStore --> K8sPod
-    Registry --> K8sPod
-    
-    K8sPod --> ElizaAgent
-    ElizaAgent --> Monitoring
-    
-    style Config fill:#e3f2fd
-    style Transform fill:#fff3e0
-    style ConfigDB fill:#f3e5f5
-    style ElizaAgent fill:#e8f5e8
+    // 4. Return unified response
+    return {
+      agent,
+      deployment,
+      status: 'deploying',
+      portainer_url: `https://portainer.yourdomain.com/#!/1/docker/stacks/${deployment.id}`
+    };
+  }
+}
 ```
 
 ## 🔧 Infrastructure Requirements
 
-### Kubernetes Cluster Specifications
+### Enhanced Kubernetes Cluster with Portainer
 
-| Component | Minimum | Recommended | Description |
-|-----------|---------|-------------|-------------|
-| **Nodes** | 3 nodes | 5 nodes | For high availability |
-| **CPU** | 8 cores | 16 cores | Per node |
-| **Memory** | 32GB | 64GB | Per node |
-| **Storage** | 1TB | 2TB+ | For images and logs |
-| **Network** | 1Gbps | 10Gbps | Load balancer with SSL |
+| Component | Minimum | Recommended | Purpose |
+|-----------|---------|-------------|---------|
+| **Portainer** | 1 vCPU, 2GB RAM | 2 vCPU, 4GB RAM | Container management |
+| **Kubernetes Masters** | 4 vCPU, 8GB RAM | 8 vCPU, 16GB RAM | Cluster management |
+| **Worker Nodes** | 8 vCPU, 32GB RAM | 16 vCPU, 64GB RAM | Agent workloads |
+| **Supabase** | Cloud service | Cloud service | Database & Auth |
+| **Registry** | 2 vCPU, 4GB RAM | 4 vCPU, 8GB RAM | Container images |
 
 ### Required Components
 
@@ -341,98 +467,13 @@ graph LR
 - **Ingress Controller**: NGINX Ingress Controller with security configurations
 - **Certificate Management**: cert-manager with Let's Encrypt or enterprise CA
 - **Monitoring**: Prometheus, Grafana, AlertManager with security metrics
-- **Service Mesh**: Istio (recommended for security) with mTLS enforcement
+- **Portainer**: Container management platform with REST API
 
-#### Security Infrastructure
-- **Secrets Management**: Kubernetes secrets with proper access controls
-- **Container Registry**: Private Docker registry with security scanning
-- **Image Scanning**: Trivy for vulnerability scanning
-- **API Authentication**: API key-based authentication system
-- **Network Security**: Network policies and SSL/TLS termination
+#### Portainer Configuration
+- **Database**: PostgreSQL or SQLite for Portainer data
+- **Authentication**: LDAP/OAuth integration or local users
+- **RBAC**: Role-based access control for team management
+- **Templates**: Custom Eliza agent templates
+- **Endpoints**: Multi-cluster endpoint management
 
-## 📊 Component Responsibilities
-
-| Component | Responsibility | Input | Output |
-|-----------|----------------|--------|--------|
-| **Agent Configuration Service** | Transform UI config to Eliza format | Agent config payload | Character file + metadata |
-| **Build Service** | Create Docker images | Agent config + character file | Container image |
-| **Kubernetes Service** | Deploy and manage agents | Image tag + config | Running agent pods |
-| **Monitoring Service** | Track agent health | Agent metrics | Health status + alerts |
-| **Notification Service** | Send status updates | Deployment events | User notifications |
-
-## 🔍 Monitoring Architecture
-
-### Metrics Collection Flow
-
-```mermaid
-graph TB
-    subgraph "Agent Pods"
-        Agent1[Agent 1]
-        Agent2[Agent 2]
-        AgentN[Agent N]
-    end
-    
-    subgraph "Metrics Collection"
-        Prometheus[Prometheus]
-        NodeExporter[Node Exporter]
-        CAdvisor[cAdvisor]
-    end
-    
-    subgraph "Visualization"
-        Grafana[Grafana]
-        AlertManager[Alert Manager]
-    end
-    
-    subgraph "Notifications"
-        Slack[Slack]
-        Email[Email]
-        PagerDuty[PagerDuty]
-    end
-    
-    Agent1 --> Prometheus
-    Agent2 --> Prometheus
-    AgentN --> Prometheus
-    
-    NodeExporter --> Prometheus
-    CAdvisor --> Prometheus
-    
-    Prometheus --> Grafana
-    Prometheus --> AlertManager
-    
-    AlertManager --> Slack
-    AlertManager --> Email
-    AlertManager --> PagerDuty
-    
-    style Agent1 fill:#e8f5e8
-    style Prometheus fill:#fff3e0
-    style Grafana fill:#e1f5fe
-    style AlertManager fill:#ffebee
-```
-
-## 🚀 Next Steps
-
-Ready to dive deeper into the system? Check out these related sections:
-
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 20px 0;">
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #4CAF50;">
-<h4><a href="getting-started" style="text-decoration: none; color: #4CAF50;">🚀 Getting Started</a></h4>
-<p>Learn how to deploy this architecture</p>
-</div>
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #F44336;">
-<h4><a href="security" style="text-decoration: none; color: #F44336;">🔐 Security Details</a></h4>
-<p>Understand the security implementation</p>
-</div>
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #9C27B0;">
-<h4><a href="deployment" style="text-decoration: none; color: #9C27B0;">⚙️ Deployment Guide</a></h4>
-<p>Production deployment strategies</p>
-</div>
-
-<div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; border-left: 4px solid #607D8B;">
-<h4><a href="monitoring" style="text-decoration: none; color: #607D8B;">📊 Monitoring Setup</a></h4>
-<p>Configure monitoring and alerting</p>
-</div>
-
-</div> 
+This enhanced architecture provides unified container management through Portainer while maintaining the robust Supabase authentication and Eliza agent framework integration. 
